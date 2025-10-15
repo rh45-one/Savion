@@ -50,7 +50,7 @@
     </footer>
 
     <script>
-      // Mobile menu toggle (unchanged behavior, fixed visibility issues)
+      // Mobile menu toggle
       (function () {
         var btn = document.querySelector('.hamburger');
         var menu = document.getElementById('mobileMenu');
@@ -72,12 +72,8 @@
           var open = btn.getAttribute('aria-expanded') === 'true';
           open ? closeMenu() : openMenu();
         });
-        menu.addEventListener('click', function (e) {
-          if (e.target.tagName === 'A') closeMenu();
-        });
-        document.addEventListener('keydown', function (e) {
-          if (e.key === 'Escape') closeMenu();
-        });
+        menu.addEventListener('click', function (e) { if (e.target.tagName === 'A') closeMenu(); });
+        document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeMenu(); });
         document.addEventListener('click', function (e) {
           if (menu.hasAttribute('hidden')) return;
           var within = e.target.closest('.mobile-menu, .hamburger');
@@ -85,17 +81,18 @@
         });
       })();
 
-      // Glass interaction: pointer-tracked highlights/refraction
+      // === Liquid glass dynamics: pointer & optional device tilt ===
       (function () {
-        var mediaReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-        if (mediaReduced) return;
+        var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (reduce) return;
 
+        // Track pointer for specular highlight focus
         function attach(el) {
           if (!el) return;
           el.addEventListener('pointermove', function (e) {
             var r = el.getBoundingClientRect();
-            var x = (e.clientX - r.left) / r.width;
-            var y = (e.clientY - r.top) / r.height;
+            var x = (e.clientX - r.left) / Math.max(r.width, 1);
+            var y = (e.clientY - r.top) / Math.max(r.height, 1);
             el.style.setProperty('--mx', x.toFixed(4));
             el.style.setProperty('--my', y.toFixed(4));
           });
@@ -105,16 +102,49 @@
           });
         }
 
-        // Buttons + nav items + cards get subtle responsiveness
-        var targets = document.querySelectorAll(
-          ':root[data-theme="liquid-glass"] button, ' +
-          ':root[data-theme="liquid-glass-light"] button, ' +
-          ':root[data-theme="liquid-glass"] .desktop-nav a, ' +
-          ':root[data-theme="liquid-glass-light"] .desktop-nav a, ' +
-          ':root[data-theme="liquid-glass"] #mobileMenu a, ' +
+        var selectors = [
+          ':root[data-theme="liquid-glass"] button',
+          ':root[data-theme="liquid-glass-light"] button',
+          ':root[data-theme="liquid-glass"] .desktop-nav a',
+          ':root[data-theme="liquid-glass-light"] .desktop-nav a',
+          ':root[data-theme="liquid-glass"] #mobileMenu a',
           ':root[data-theme="liquid-glass-light"] #mobileMenu a'
-        );
-        targets.forEach(attach);
+        ].join(',');
+
+        document.querySelectorAll(selectors).forEach(attach);
+
+        // Optional device tilt -> tiny global parallax for all glass controls
+        function setTilt(x, y) {
+          document.documentElement.style.setProperty('--tiltx', x.toFixed(3));
+          document.documentElement.style.setProperty('--tilty', y.toFixed(3));
+        }
+        // Pointer as fallback "parallax"
+        window.addEventListener('pointermove', function (e) {
+          var w = window.innerWidth, h = window.innerHeight;
+          var tx = ((e.clientX / w) - 0.5) * 3; // ±1.5px
+          var ty = ((e.clientY / h) - 0.5) * 3;
+          setTilt(tx, ty);
+        });
+
+        // Try deviceorientation (needs permission on iOS)
+        if (window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === 'function') {
+          const ask = () => DeviceOrientationEvent.requestPermission().then(function (resp) {
+            if (resp !== 'granted') return;
+            window.addEventListener('deviceorientation', function (e) {
+              var tx = (e.gamma || 0) / 30 * 2; // ±2px
+              var ty = (e.beta  || 0) / 30 * 2;
+              setTilt(tx, ty);
+            });
+          }).catch(function(){});
+          // prompt on first tap
+          window.addEventListener('click', function once() { ask(); window.removeEventListener('click', once); }, { once: true });
+        } else if (window.DeviceOrientationEvent) {
+          window.addEventListener('deviceorientation', function (e) {
+            var tx = (e.gamma || 0) / 30 * 2;
+            var ty = (e.beta  || 0) / 30 * 2;
+            setTilt(tx, ty);
+          });
+        }
       })();
     </script>
   </body>
