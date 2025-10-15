@@ -184,3 +184,45 @@ details.filter-box textarea::placeholder {
 :root[data-theme="dracula"] details.filter-box input[type="date"]::-webkit-calendar-picker-indicator {
   filter: invert(1) brightness(1.2);
 }
+
+/* === Setup grid equal-height cards === */
+.setup-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+  align-items: stretch; /* stretch columns to equal height */
+}
+
+.setup-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.setup-card .card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1 1 auto; /* fill available height */
+}
+
+.setup-card .actions {
+  margin-top: auto;           /* push actions to the bottom */
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+/* Small screens: maintain nice spacing */
+@media (max-width: 600px) {
+  .setup-grid {
+    gap: 12px;
+  }
+}
+
+/* Settings form sizing/centering */
+.settings-form {
+  max-width: 720px;
+  margin: 0 auto;
+  width: 100%;
+}

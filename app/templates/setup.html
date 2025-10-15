@@ -1,25 +1,44 @@
 {% extends "base.html" %}
 {% block content %}
-<h2>Welcome to Savion</h2>
-<p>Set an initial balance or import a previously exported ledger file to continue where you left off.</p>
+<h2>Setup</h2>
 
-<div class="grid-2">
-  <form action="/setup" method="post" class="card">
-    <h3>Fresh setup</h3>
-    <input type="hidden" name="setup_mode" value="fresh">
-    <label>Initial balance
-      <input type="number" name="initial_balance" step="0.01" inputmode="decimal" required>
-    </label>
-    <button type="submit">Initialize</button>
-  </form>
+<div class="setup-grid">
+  <!-- Fresh setup -->
+  <div class="card setup-card">
+    <div class="card-body">
+      <h3 style="margin-top:0">Fresh setup</h3>
+      <p class="muted">Start a new ledger with an initial balance.</p>
 
-  <form action="/setup" method="post" enctype="multipart/form-data" class="card">
-    <h3>Import existing ledger</h3>
-    <input type="hidden" name="setup_mode" value="import">
-    <label>Ledger file (.jsonl)
-      <input type="file" name="ledger_file" accept=".jsonl,text/plain" required>
-    </label>
-    <button type="submit">Import</button>
-  </form>
+      <form action="/setup" method="post" class="form-grid" style="margin-top:8px; flex:1;">
+        <input type="hidden" name="setup_mode" value="fresh">
+        <label>Initial balance
+          <input type="number" name="initial_balance" step="0.01" min="0" required>
+        </label>
+
+        <div class="actions">
+          <button type="submit">Start</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Import existing ledger -->
+  <div class="card setup-card">
+    <div class="card-body">
+      <h3 style="margin-top:0">Import existing ledger</h3>
+      <p class="muted">Restore from a previously exported <code>.jsonl</code> file.</p>
+
+      <form action="/setup" method="post" enctype="multipart/form-data" class="form-grid" style="margin-top:8px; flex:1;">
+        <input type="hidden" name="setup_mode" value="import">
+        <label>Ledger file
+          <input type="file" name="ledger_file" accept=".jsonl,text/plain" required>
+        </label>
+
+        <div class="actions">
+          <button type="submit">Import</button>
+        </div>
+      </form>
+    </div>
+  </div>
 </div>
 {% endblock %}
