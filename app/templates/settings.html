@@ -24,12 +24,48 @@
   </label>
 
   <label>Timezone (IANA, e.g., <code>Europe/Madrid</code>)
-    <input type="text" name="timezone" value="{{ settings.timezone|default('Europe/Madrid') }}" required>
-    <small style="color: var(--muted); display:block; margin-top:6px;">
-      Used to display dates and timestamp new entries. Existing logs keep their original timestamps.
+    <input id="tzInput" type="text" name="timezone" value="{{ settings.timezone|default('Europe/Madrid') }}" required>
+    <small id="tzPreview" style="color: var(--muted); display:block; margin-top:6px;">
+      Current time in <strong>{{ settings.timezone }}</strong>: {{ tz_preview }}
     </small>
   </label>
 
   <button type="submit">Save</button>
 </form>
+
+<script>
+  // Live timezone preview without listing cities; user types IANA zone
+  (function () {
+    var input = document.getElementById('tzInput');
+    var preview = document.getElementById('tzPreview');
+    if (!input || !preview) return;
+
+    function render(zone) {
+      if (!zone || !zone.trim()) {
+        preview.innerHTML = 'Enter an IANA timezone, e.g. <code>Europe/Madrid</code>.';
+        return;
+      }
+      try {
+        var now = new Date();
+        // European format via en-GB locale; show DD/MM/YYYY HH:MM
+        var s = now.toLocaleString('en-GB', {
+          timeZone: zone,
+          year: 'numeric', month: '2-digit', day: '2-digit',
+          hour: '2-digit', minute: '2-digit', hour12: false
+        }).replace(',', '');
+        preview.innerHTML = 'Current time in <strong>' + zone + '</strong>: ' + s;
+      } catch (e) {
+        // RangeError for invalid timeZone
+        preview.innerHTML = '⚠️ Invalid timezone. Try something like <code>Europe/Madrid</code> or <code>America/New_York</code>.';
+      }
+    }
+
+    // Initial render (in case value changed server-side)
+    render(input.value);
+
+    // Update on user input
+    input.addEventListener('input', function () { render(input.value); });
+    input.addEventListener('change', function () { render(input.value); });
+  })();
+</script>
 {% endblock %}

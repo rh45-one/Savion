@@ -84,6 +84,15 @@ def format_display_date(ts: str, tz_name: str) -> str:
         pass
     return dt.strftime("%d/%m/%Y %H:%M")
 
+def format_now_preview(tz_name: str) -> str:
+    """Server-side preview for current time in tz, DD/MM/YYYY HH:MM."""
+    try:
+        tz = ZoneInfo(tz_name)
+    except Exception:
+        tz = datetime.timezone.utc
+    dt = datetime.datetime.now(tz=tz)
+    return dt.strftime("%d/%m/%Y %H:%M")
+
 def is_initialized() -> bool:
     return os.path.exists(LEDGER_PATH) and os.path.getsize(LEDGER_PATH) > 0
 
@@ -373,7 +382,7 @@ async def export_ledger():
     guard = ensure_setup_page()
     if guard: return guard
 
-    # Ensure latest settings snapshot (now includes timezone)
+    # Ensure latest settings snapshot (includes timezone)
     s = get_settings()
     append_settings_to_ledger(s)
 
@@ -448,11 +457,13 @@ async def reset_post(
 @app.get("/settings", response_class=HTMLResponse)
 async def settings_get(request: Request):
     s = get_settings()
+    tz_preview = format_now_preview(s["timezone"])
     return templates.TemplateResponse("settings.html", {
         "request": request,
         "app_name": APP_NAME,
         "theme": s["theme"],
-        "settings": s
+        "settings": s,
+        "tz_preview": tz_preview
     })
 
 @app.post("/settings", response_class=HTMLResponse)
