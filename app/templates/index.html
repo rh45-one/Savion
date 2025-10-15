@@ -24,7 +24,7 @@
     <button type="submit">Submit</button>
   </form>
 </section>
-
+<br>
 <section class="card">
   <h3 style="margin-top:0">Recent Movements</h3>
 
@@ -39,7 +39,7 @@
 
     {% for r in movements %}
       <div class="row">
-        <div class="cell" data-label="Date">{{ r.timestamp }}</div>
+        <div class="cell" data-label="Date">{{ r.timestamp_display }}</div>
         <div class="cell" data-label="Action">{{ r.action }}</div>
         <div class="cell" data-label="Amount">{{ r.amount_display }}</div>
         <div class="cell" data-label="Balance">{{ r.balance_display }}</div>

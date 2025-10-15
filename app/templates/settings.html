@@ -23,6 +23,13 @@
     </select>
   </label>
 
+  <label>Timezone (IANA, e.g., <code>Europe/Madrid</code>)
+    <input type="text" name="timezone" value="{{ settings.timezone|default('Europe/Madrid') }}" required>
+    <small style="color: var(--muted); display:block; margin-top:6px;">
+      Used to display dates and timestamp new entries. Existing logs keep their original timestamps.
+    </small>
+  </label>
+
   <button type="submit">Save</button>
 </form>
 {% endblock %}

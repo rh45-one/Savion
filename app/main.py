@@ -4,6 +4,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 from typing import Optional, List, Literal
+from zoneinfo import ZoneInfo
 import os, json, datetime, threading, random
 
 APP_NAME = "Savion"
@@ -14,9 +15,10 @@ os.makedirs(DATA_DIR, exist_ok=True)
 
 # --- Default settings ---
 DEFAULT_SETTINGS = {
-    "theme": "dark",       # "dark" | "light" | "dracula"
-    "fade_start": 1000.0,  # where green starts to fade to red
-    "currency": "EUR"      # "EUR" | "USD" | "GBP" (display only)
+    "theme": "dark",        # "dark" | "light" | "dracula"
+    "fade_start": 1000.0,   # where green starts to fade to red
+    "currency": "EUR",      # "EUR" | "USD" | "GBP"
+    "timezone": "Europe/Madrid"  # IANA tz for display + new log timestamps
 }
 
 app = FastAPI(title=APP_NAME)
@@ -42,11 +44,45 @@ class SettingsEntry(BaseModel):
     timestamp: str
     theme: Literal["dark","light","dracula"]
     fade_start: float
-    currency: Optional[Literal["EUR","USD","GBP"]] = None  # optional for backward compatibility
+    currency: Optional[Literal["EUR","USD","GBP"]] = None
+    timezone: Optional[str] = None  # IANA tz
 
 # --- Helpers ---
-def now_iso():
-    return datetime.datetime.utcnow().replace(tzinfo=datetime.timezone.utc).isoformat()
+def validate_timezone(tz: Optional[str]) -> str:
+    name = (tz or "").strip() or DEFAULT_SETTINGS["timezone"]
+    try:
+        ZoneInfo(name)
+        return name
+    except Exception:
+        return DEFAULT_SETTINGS["timezone"]
+
+def now_iso_in_tz(tz_name: str) -> str:
+    try:
+        tz = ZoneInfo(tz_name)
+    except Exception:
+        tz = datetime.timezone.utc
+    return datetime.datetime.now(tz=tz).isoformat()
+
+def parse_ts(ts: str) -> datetime.datetime:
+    """Parse ISO timestamp to aware datetime; fall back to epoch if invalid."""
+    try:
+        s = ts.replace("Z", "+00:00")
+        dt = datetime.datetime.fromisoformat(s)
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=datetime.timezone.utc)
+        return dt
+    except Exception:
+        return datetime.datetime(1970, 1, 1, tzinfo=datetime.timezone.utc)
+
+def format_display_date(ts: str, tz_name: str) -> str:
+    """Return European-format date: DD/MM/YYYY HH:MM in target tz."""
+    dt = parse_ts(ts)
+    try:
+        tz = ZoneInfo(tz_name)
+        dt = dt.astimezone(tz)
+    except Exception:
+        pass
+    return dt.strftime("%d/%m/%Y %H:%M")
 
 def is_initialized() -> bool:
     return os.path.exists(LEDGER_PATH) and os.path.getsize(LEDGER_PATH) > 0
@@ -58,7 +94,7 @@ def get_settings() -> dict:
     try:
         with open(SETTINGS_PATH, "r", encoding="utf-8") as f:
             data = json.load(f)
-        # ensure defaults exist
+        # ensure defaults
         for k, v in DEFAULT_SETTINGS.items():
             data.setdefault(k, v)
         # sanitize
@@ -72,6 +108,7 @@ def get_settings() -> dict:
             data["fade_start"] = 1.0
         if data.get("currency") not in ("EUR","USD","GBP"):
             data["currency"] = DEFAULT_SETTINGS["currency"]
+        data["timezone"] = validate_timezone(data.get("timezone"))
         return data
     except Exception:
         return DEFAULT_SETTINGS.copy()
@@ -84,10 +121,11 @@ def save_settings(s: dict):
 def append_settings_to_ledger(s: dict):
     entry = SettingsEntry(
         kind="settings",
-        timestamp=now_iso(),
+        timestamp=now_iso_in_tz(s.get("timezone", DEFAULT_SETTINGS["timezone"])),
         theme=s.get("theme", DEFAULT_SETTINGS["theme"]),
         fade_start=float(s.get("fade_start", DEFAULT_SETTINGS["fade_start"])),
-        currency=s.get("currency", DEFAULT_SETTINGS["currency"])
+        currency=s.get("currency", DEFAULT_SETTINGS["currency"]),
+        timezone=s.get("timezone", DEFAULT_SETTINGS["timezone"])
     )
     with write_lock:
         with open(LEDGER_PATH, "a", encoding="utf-8") as f:
@@ -103,8 +141,7 @@ def read_ledger_entries() -> List[dict]:
             if not line:
                 continue
             try:
-                obj = json.loads(line)
-                entries.append(obj)
+                entries.append(json.loads(line))
             except Exception:
                 continue
     return entries
@@ -141,18 +178,13 @@ def ensure_setup_page():
 
 # Currency formatting
 def format_currency(value: float, currency: str) -> str:
-    """
-    $ and £ before the number; € after the number.
-    Keep minus sign before the symbol/number for clarity.
-    """
     sign = "-" if value < 0 else ""
     amt = f"{abs(value):.2f}"
     if currency == "USD":
         return f"{sign}${amt}"
     if currency == "GBP":
         return f"{sign}£{amt}"
-    # EUR default
-    return f"{sign}{amt} €"
+    return f"{sign}{amt} €"  # EUR
 
 # --- Routes ---
 @app.get("/", response_class=HTMLResponse)
@@ -167,27 +199,29 @@ async def index(request: Request):
     # color fade using settings.fade_start
     fade_start = float(settings["fade_start"])
     if balance <= 0:
-        hue = 0.0  # red
+        hue = 0.0
     elif balance >= fade_start:
-        hue = 120.0  # green
+        hue = 120.0
     else:
         ratio = max(0.0, min(balance / fade_start, 1.0))
         hue = 120.0 * ratio
     balance_color = f"hsl({hue:.0f}, 70%, 60%)"
 
-    # Build view models with currency formatting
+    # Currency + tz
     currency = settings["currency"]
+    tz_name = settings["timezone"]
     balance_display = format_currency(balance, currency)
 
     movements_src = [r for r in rows if r.kind == "movement"]
-    movements_src.sort(key=lambda r: r.timestamp, reverse=True)
+    # sort by parsed datetime desc
+    movements_src.sort(key=lambda r: parse_ts(r.timestamp), reverse=True)
 
     movements = []
     for r in movements_src[:200]:
         movements.append({
-            "timestamp": r.timestamp,
+            "timestamp_display": format_display_date(r.timestamp, tz_name),
             "action": r.action,
-            "amount_display": format_currency(float(r.amount or 0.0), currency),  # show positive amount; sign implied by action
+            "amount_display": format_currency(float(r.amount or 0.0), currency),
             "balance_display": format_currency(float(r.resulting_balance or 0.0), currency),
             "description": r.description or ""
         })
@@ -257,7 +291,8 @@ async def setup_post(
                                 imported_settings = {
                                     "theme": se.theme,
                                     "fade_start": float(se.fade_start),
-                                    "currency": se.currency or DEFAULT_SETTINGS["currency"]
+                                    "currency": (se.currency or DEFAULT_SETTINGS["currency"]),
+                                    "timezone": validate_timezone(se.timezone)
                                 }
                             except Exception:
                                 pass
@@ -279,9 +314,7 @@ async def setup_post(
         if imported_settings:
             s = get_settings()
             s.update(imported_settings)
-            # sanitize after update
-            if s.get("currency") not in ("EUR","USD","GBP"):
-                s["currency"] = DEFAULT_SETTINGS["currency"]
+            s["timezone"] = validate_timezone(s.get("timezone"))
             save_settings(s)
 
         return RedirectResponse("/", 303)
@@ -295,9 +328,11 @@ async def setup_post(
                 "app_name": APP_NAME,
                 "theme": s["theme"]
             }, status_code=400)
+
+        s = get_settings()
         entry = Movement(
             kind="setup",
-            timestamp=now_iso(),
+            timestamp=now_iso_in_tz(s["timezone"]),
             initial_balance=float(initial_balance),
             note="Fresh setup"
         )
@@ -319,9 +354,10 @@ async def add_movement(
     delta = float(amount) if action == "add" else -float(amount)
     new_balance = round(balance + delta, 2)
 
+    s = get_settings()
     entry = Movement(
         kind="movement",
-        timestamp=now_iso(),
+        timestamp=now_iso_in_tz(s["timezone"]),
         action=action,
         amount=float(amount),
         delta=delta,
@@ -337,7 +373,7 @@ async def export_ledger():
     guard = ensure_setup_page()
     if guard: return guard
 
-    # Ensure latest settings snapshot (now includes currency)
+    # Ensure latest settings snapshot (now includes timezone)
     s = get_settings()
     append_settings_to_ledger(s)
 
@@ -392,7 +428,8 @@ async def reset_post(
         try:
             rows = read_movements()
             balance = compute_balance(rows)
-            reset_entry = Movement(kind="reset", timestamp=now_iso(), note=f"Reset at balance {balance:.2f}")
+            s = get_settings()
+            reset_entry = Movement(kind="reset", timestamp=now_iso_in_tz(s["timezone"]), note=f"Reset at balance {balance:.2f}")
             append_entry(reset_entry)
         except Exception:
             pass
@@ -402,7 +439,7 @@ async def reset_post(
             except FileNotFoundError:
                 pass
 
-    # Reset settings to defaults (including currency)
+    # Reset settings to defaults
     save_settings(DEFAULT_SETTINGS.copy())
 
     return RedirectResponse("/setup", 303)
@@ -424,6 +461,7 @@ async def settings_post(
     theme: Literal["dark","light","dracula"] = Form(...),
     fade_start: float = Form(...),
     currency: Literal["EUR","USD","GBP"] = Form(...),
+    timezone: str = Form(...),
 ):
     # sanitize fade_start
     try:
@@ -437,6 +475,7 @@ async def settings_post(
     s["theme"] = theme
     s["fade_start"] = fs
     s["currency"] = currency
+    s["timezone"] = validate_timezone(timezone)
 
     # persist & snapshot
     save_settings(s)
