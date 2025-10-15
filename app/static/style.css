@@ -148,3 +148,39 @@ main .card + .card {
 
 details.filter-box { border: 1px solid var(--border); border-radius: 12px; padding: 8px 12px; background: var(--soft); }
 details.filter-box > summary { cursor: pointer; font-weight: 600; }
+
+/* === Filter panel field contrast overrides === */
+details.filter-box input[type="text"],
+details.filter-box input[type="number"],
+details.filter-box input[type="date"],
+details.filter-box select,
+details.filter-box textarea {
+  /* Use a dedicated var so it's visibly different from the panel bg */
+  background: var(--filter-field-bg, #ffffff);
+  border-color: var(--border);
+  color: var(--text);
+  transition: background-color .18s ease, border-color .18s ease, box-shadow .18s ease;
+}
+
+details.filter-box input[type="text"]::placeholder,
+details.filter-box input[type="number"]::placeholder,
+details.filter-box textarea::placeholder {
+  color: var(--muted);
+}
+
+/* Theme-specific field backgrounds so boxes pop against the panel */
+:root[data-theme="light"] {
+  --filter-field-bg: #ffffff; /* crisp white on light */
+}
+:root[data-theme="dark"] {
+  --filter-field-bg: rgba(255, 255, 255, 0.06); /* subtle contrast on dark */
+}
+:root[data-theme="dracula"] {
+  --filter-field-bg: rgba(255, 255, 255, 0.08); /* slightly brighter for Dracula */
+}
+
+/* Optional: keep the date picker icon visible on dark themes inside panel */
+:root[data-theme="dark"] details.filter-box input[type="date"]::-webkit-calendar-picker-indicator,
+:root[data-theme="dracula"] details.filter-box input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1) brightness(1.2);
+}
