@@ -28,6 +28,44 @@
 <section class="card">
   <h3 style="margin-top:0">{{ t.section_recent }}</h3>
 
+  <!-- Filters -->
+  <form method="get" class="form-grid" style="margin-bottom:10px">
+    <label>{{ t.filters_search }}
+      <input type="text" name="q" value="{{ q }}" placeholder="{{ t.filters_search }}">
+    </label>
+
+    <label>{{ t.filters_action }}
+      <select name="action">
+        <option value="all" {% if action_filter == 'all' %}selected{% endif %}>{{ t.filters_action_all }}</option>
+        <option value="add" {% if action_filter == 'add' %}selected{% endif %}>{{ t.filters_action_add }}</option>
+        <option value="withdraw" {% if action_filter == 'withdraw' %}selected{% endif %}>{{ t.filters_action_withdraw }}</option>
+      </select>
+    </label>
+
+    <label>{{ t.filters_date_from }}
+      <input type="date" name="start" value="{{ start_str }}">
+    </label>
+
+    <label>{{ t.filters_date_to }}
+      <input type="date" name="end" value="{{ end_str }}">
+    </label>
+
+    <label>{{ t.filters_amount_min }}
+      <input type="number" name="min" step="0.01" value="{{ min_str }}" min="0">
+    </label>
+
+    <label>{{ t.filters_amount_max }}
+      <input type="number" name="max" step="0.01" value="{{ max_str }}" min="0">
+    </label>
+
+    <div style="display:flex; gap:8px; align-items:center">
+      <button type="submit">{{ t.filters_apply }}</button>
+      <a href="/" class="button-link" style="text-decoration:none">
+        <button type="button">{{ t.filters_clear }}</button>
+      </a>
+    </div>
+  </form>
+
   <div class="table">
     <div class="row header">
       <div class="cell">{{ t.table_date }}</div>

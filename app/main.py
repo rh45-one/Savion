@@ -55,6 +55,19 @@ TRANSLATIONS = {
         "error_file_invalid": "File format invalid. Expecting JSON Lines exported by Savion.",
         "error_initial_balance_required": "Please enter an initial balance or choose Import.",
         "error_reset_verification": "Verification failed. Type RESET and solve the math correctly.",
+        # Filters
+        "filters_title": "Filters",
+        "filters_search": "Search",
+        "filters_action": "Action",
+        "filters_action_all": "All",
+        "filters_action_add": "Add only",
+        "filters_action_withdraw": "Withdraw only",
+        "filters_date_from": "From date",
+        "filters_date_to": "To date",
+        "filters_amount_min": "Min amount",
+        "filters_amount_max": "Max amount",
+        "filters_apply": "Apply",
+        "filters_clear": "Clear",
     },
     "es": {
         "nav_home": "Inicio",
@@ -96,6 +109,19 @@ TRANSLATIONS = {
         "error_file_invalid": "Formato de archivo no válido. Se espera JSON Lines exportado por Savion.",
         "error_initial_balance_required": "Introduce un saldo inicial o elige Importar.",
         "error_reset_verification": "Verificación fallida. Escribe RESET y resuelve la operación correctamente.",
+        # Filters
+        "filters_title": "Filtros",
+        "filters_search": "Buscar",
+        "filters_action": "Acción",
+        "filters_action_all": "Todas",
+        "filters_action_add": "Solo añadir",
+        "filters_action_withdraw": "Solo retirar",
+        "filters_date_from": "Desde fecha",
+        "filters_date_to": "Hasta fecha",
+        "filters_amount_min": "Cantidad mínima",
+        "filters_amount_max": "Cantidad máxima",
+        "filters_apply": "Aplicar",
+        "filters_clear": "Limpiar",
     },
     "fr": {
         "nav_home": "Accueil",
@@ -137,6 +163,19 @@ TRANSLATIONS = {
         "error_file_invalid": "Format de fichier invalide. Attendu : JSON Lines exporté par Savion.",
         "error_initial_balance_required": "Saisissez un solde initial ou choisissez Importer.",
         "error_reset_verification": "Échec de la vérification. Tapez RESET et résolvez correctement l’opération.",
+        # Filters
+        "filters_title": "Filtres",
+        "filters_search": "Rechercher",
+        "filters_action": "Action",
+        "filters_action_all": "Toutes",
+        "filters_action_add": "Ajouter uniquement",
+        "filters_action_withdraw": "Retirer uniquement",
+        "filters_date_from": "Du",
+        "filters_date_to": "Au",
+        "filters_amount_min": "Montant min.",
+        "filters_amount_max": "Montant max.",
+        "filters_apply": "Appliquer",
+        "filters_clear": "Réinitialiser",
     },
 }
 
@@ -363,12 +402,83 @@ async def index(request: Request):
     tz_name = settings["timezone"]
     balance_display = format_currency(balance, currency)
 
-    movements_src = [r for r in rows if r.kind == "movement"]
-    # sort by parsed datetime desc
-    movements_src.sort(key=lambda r: parse_ts(r.timestamp), reverse=True)
+    # --- Filters from querystring ---
+    qp = request.query_params
+    q = (qp.get("q") or "").strip()
+    action_filter = (qp.get("action") or "all").lower()
+    start_str = (qp.get("start") or "").strip()  # yyyy-mm-dd from <input type="date">
+    end_str = (qp.get("end") or "").strip()
+    min_str = (qp.get("min") or "").strip()
+    max_str = (qp.get("max") or "").strip()
 
+    # Parse date bounds
+    start_date = None
+    end_date = None
+    try:
+        if start_str:
+            start_date = datetime.date.fromisoformat(start_str)
+        if end_str:
+            end_date = datetime.date.fromisoformat(end_str)
+    except Exception:
+        start_date = start_date or None
+        end_date = end_date or None
+
+    # Parse amount bounds
+    min_amount = None
+    max_amount = None
+    try:
+        if min_str:
+            min_amount = float(min_str)
+    except Exception:
+        min_amount = None
+    try:
+        if max_str:
+            max_amount = float(max_str)
+    except Exception:
+        max_amount = None
+
+    # Prepare and filter movements
+    movements_src = [r for r in rows if r.kind == "movement"]
+
+    def passes_filters(m: Movement) -> bool:
+        # action
+        if action_filter in ("add", "withdraw") and (m.action or "") != action_filter:
+            return False
+
+        # date range: convert timestamp to selected tz and compare date() inclusive
+        m_dt = parse_ts(m.timestamp)
+        try:
+            m_dt = m_dt.astimezone(ZoneInfo(tz_name))
+        except Exception:
+            pass
+        m_d = m_dt.date()
+        if start_date and m_d < start_date:
+            return False
+        if end_date and m_d > end_date:
+            return False
+
+        # amount range uses the 'amount' field (positive)
+        m_amt = float(m.amount or 0.0)
+        if min_amount is not None and m_amt < min_amount:
+            return False
+        if max_amount is not None and m_amt > max_amount:
+            return False
+
+        # search: in description, action, or formatted display date
+        if q:
+            ql = q.lower()
+            hay = f"{m.description or ''} {m.action or ''} {format_display_date(m.timestamp, tz_name)}".lower()
+            if ql not in hay:
+                return False
+        return True
+
+    filtered = [m for m in movements_src if passes_filters(m)]
+    # sort by parsed datetime desc
+    filtered.sort(key=lambda r: parse_ts(r.timestamp), reverse=True)
+
+    # Build view models with currency formatting
     movements = []
-    for r in movements_src[:200]:
+    for r in filtered[:200]:
         action_label = t["action_add"] if r.action == "add" else t["action_withdraw"]
         movements.append({
             "timestamp_display": format_display_date(r.timestamp, tz_name),
@@ -386,7 +496,14 @@ async def index(request: Request):
         "app_name": APP_NAME,
         "theme": settings["theme"],
         "t": t,
-        "lang": lang
+        "lang": lang,
+        # pass back filter values for sticky form inputs
+        "q": q,
+        "action_filter": action_filter,
+        "start_str": start_str,
+        "end_str": end_str,
+        "min_str": min_str,
+        "max_str": max_str,
     })
 
 @app.get("/setup", response_class=HTMLResponse)
