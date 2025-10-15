@@ -2,7 +2,7 @@
 
 Minimal personal ledger web app (FastAPI + Jinja2). Records add/withdraw movements in a newline-delimited JSON ledger, supports import/export, settings snapshots, and a protected reset.
 
-Live demo (non-persistent): [https://savion.onrender.com](https://savion.onrender.com) — usually starts in ~5 seconds (may take up to 1 minute).
+Live demo (non-persistent): [https://savion.onrender.com](https://savion.onrender.com) — usually starts in ~20 seconds (may take up to 1 minute).
 
 ## Run
 
