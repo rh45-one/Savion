@@ -12,10 +12,10 @@ LEDGER_PATH = os.path.join(DATA_DIR, "ledger.jsonl")
 SETTINGS_PATH = os.path.join(DATA_DIR, "settings.json")
 os.makedirs(DATA_DIR, exist_ok=True)
 
+# --- Default settings ---
 DEFAULT_SETTINGS = {
-    "mode": "dark",          # "dark" | "light"
-    "fade_start": 1000.0,    # where green starts to fade to red
-    "theme": "classic"       # placeholder; not applied yet
+    "theme": "dark",       # "dark" | "light" (applied)
+    "fade_start": 1000.0   # balance where green starts to fade toward red
 }
 
 app = FastAPI(title=APP_NAME)
@@ -24,6 +24,7 @@ templates = Jinja2Templates(directory=os.path.join(os.path.dirname(__file__), "t
 
 write_lock = threading.Lock()
 
+# --- Data models ---
 class Movement(BaseModel):
     kind: Literal["setup","movement","reset"]
     timestamp: str
@@ -35,16 +36,64 @@ class Movement(BaseModel):
     description: Optional[str] = None
     resulting_balance: Optional[float] = None
 
+class SettingsEntry(BaseModel):
+    kind: Literal["settings"]
+    timestamp: str
+    theme: Literal["dark","light"]
+    fade_start: float
+
+# --- Helpers ---
 def now_iso():
     return datetime.datetime.utcnow().replace(tzinfo=datetime.timezone.utc).isoformat()
 
 def is_initialized() -> bool:
     return os.path.exists(LEDGER_PATH) and os.path.getsize(LEDGER_PATH) > 0
 
-def read_ledger() -> List[Movement]:
-    rows: List[Movement] = []
+def get_settings() -> dict:
+    if not os.path.exists(SETTINGS_PATH):
+        save_settings(DEFAULT_SETTINGS.copy())
+        return DEFAULT_SETTINGS.copy()
+    try:
+        with open(SETTINGS_PATH, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        for k, v in DEFAULT_SETTINGS.items():
+            data.setdefault(k, v)
+        # sanitize
+        if data.get("theme") not in ("dark", "light"):
+            data["theme"] = DEFAULT_SETTINGS["theme"]
+        try:
+            data["fade_start"] = float(data.get("fade_start", DEFAULT_SETTINGS["fade_start"]))
+        except Exception:
+            data["fade_start"] = DEFAULT_SETTINGS["fade_start"]
+        if data["fade_start"] <= 0:
+            data["fade_start"] = 1.0
+        return data
+    except Exception:
+        return DEFAULT_SETTINGS.copy()
+
+def save_settings(s: dict):
+    # persist to settings.json
+    with write_lock:
+        with open(SETTINGS_PATH, "w", encoding="utf-8") as f:
+            json.dump(s, f)
+
+def append_settings_to_ledger(s: dict):
+    # record a settings snapshot in the ledger for portability on export/import
+    entry = SettingsEntry(
+        kind="settings",
+        timestamp=now_iso(),
+        theme=s.get("theme", DEFAULT_SETTINGS["theme"]),
+        fade_start=float(s.get("fade_start", DEFAULT_SETTINGS["fade_start"]))
+    )
+    with write_lock:
+        with open(LEDGER_PATH, "a", encoding="utf-8") as f:
+            f.write(json.dumps(entry.dict(), ensure_ascii=False) + "\n")
+
+def read_ledger_entries() -> List[dict]:
+    """Read raw JSON objects (skip blank/malformed)."""
+    entries: List[dict] = []
     if not os.path.exists(LEDGER_PATH):
-        return rows
+        return entries
     with open(LEDGER_PATH, "r", encoding="utf-8") as f:
         for line in f:
             line = line.strip()
@@ -52,6 +101,18 @@ def read_ledger() -> List[Movement]:
                 continue
             try:
                 obj = json.loads(line)
+                entries.append(obj)
+            except Exception:
+                continue
+    return entries
+
+def read_movements() -> List[Movement]:
+    """Only return movement/setup/reset entries (ignore settings lines)."""
+    rows: List[Movement] = []
+    for obj in read_ledger_entries():
+        k = obj.get("kind")
+        if k in ("setup","movement","reset"):
+            try:
                 rows.append(Movement(**obj))
             except Exception:
                 continue
@@ -71,53 +132,30 @@ def append_entry(entry: Movement):
         with open(LEDGER_PATH, "a", encoding="utf-8") as f:
             f.write(json.dumps(entry.dict(), ensure_ascii=False) + "\n")
 
-# --------- Settings helpers ----------
-def get_settings() -> dict:
-    if not os.path.exists(SETTINGS_PATH):
-        save_settings(DEFAULT_SETTINGS.copy())
-        return DEFAULT_SETTINGS.copy()
-    try:
-        with open(SETTINGS_PATH, "r", encoding="utf-8") as f:
-            data = json.load(f)
-        # ensure defaults exist
-        for k, v in DEFAULT_SETTINGS.items():
-            data.setdefault(k, v)
-        return data
-    except Exception:
-        return DEFAULT_SETTINGS.copy()
-
-def save_settings(s: dict):
-    with write_lock:
-        with open(SETTINGS_PATH, "w", encoding="utf-8") as f:
-            json.dump(s, f)
-
 def ensure_setup_page():
     if not is_initialized():
         return RedirectResponse(url="/setup", status_code=303)
     return None
 
-# ---------- Views ----------
+# --- Routes ---
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
     guard = ensure_setup_page()
     if guard: return guard
 
-    rows = read_ledger()
+    settings = get_settings()
+    rows = read_movements()
     balance = compute_balance(rows)
 
-    # color fade using settings.fade_start
-    settings = get_settings()
-    fade_start = float(settings.get("fade_start", DEFAULT_SETTINGS["fade_start"]))
-    if fade_start <= 0:
-        fade_start = 1.0  # safety
-
+    # compute HSL color based on settings.fade_start
+    fade_start = float(settings["fade_start"])
     if balance <= 0:
         hue = 0.0  # red
     elif balance >= fade_start:
         hue = 120.0  # green
     else:
         ratio = max(0.0, min(balance / fade_start, 1.0))
-        hue = 120.0 * ratio  # 120=green, 0=red
+        hue = 120.0 * ratio
     balance_color = f"hsl({hue:.0f}, 70%, 60%)"
 
     movements = [r for r in rows if r.kind == "movement"]
@@ -129,7 +167,7 @@ async def index(request: Request):
         "balance_color": balance_color,
         "movements": movements[:200],
         "app_name": APP_NAME,
-        "theme_mode": settings.get("mode", "dark")
+        "theme": settings["theme"]
     })
 
 @app.get("/setup", response_class=HTMLResponse)
@@ -140,7 +178,7 @@ async def setup_get(request: Request):
     return templates.TemplateResponse("setup.html", {
         "request": request,
         "app_name": APP_NAME,
-        "theme_mode": settings.get("mode", "dark")
+        "theme": settings["theme"]
     })
 
 @app.post("/setup", response_class=HTMLResponse)
@@ -155,51 +193,73 @@ async def setup_post(
 
     if setup_mode == "import":
         if not ledger_file:
-            settings = get_settings()
+            s = get_settings()
             return templates.TemplateResponse("setup.html", {
                 "request": request,
                 "error": "Please choose a ledger file to import.",
                 "app_name": APP_NAME,
-                "theme_mode": settings.get("mode", "dark")
+                "theme": s["theme"]
             }, status_code=400)
         content = await ledger_file.read()
         text = content.decode("utf-8", errors="ignore")
         lines = [ln.strip() for ln in text.splitlines() if ln.strip()]
         if not lines:
-            settings = get_settings()
+            s = get_settings()
             return templates.TemplateResponse("setup.html", {
                 "request": request,
                 "error": "Uploaded file is empty.",
                 "app_name": APP_NAME,
-                "theme_mode": settings.get("mode", "dark")
+                "theme": s["theme"]
             }, status_code=400)
-        parsed = []
-        for ln in lines:
-            try:
-                obj = json.loads(ln)
-                Movement(**obj)
-                parsed.append(obj)
-            except Exception:
-                settings = get_settings()
-                return templates.TemplateResponse("setup.html", {
-                    "request": request,
-                    "error": "File format invalid. Expecting JSON Lines exported by Savion.",
-                    "app_name": APP_NAME,
-                    "theme_mode": settings.get("mode", "dark")
-                }, status_code=400)
+
+        # Write file verbatim; also apply any settings lines found
+        parsed_any = False
+        imported_settings = None
         with write_lock:
             with open(LEDGER_PATH, "w", encoding="utf-8") as f:
-                for obj in parsed:
-                    f.write(json.dumps(obj, ensure_ascii=False) + "\n")
+                for ln in lines:
+                    try:
+                        obj = json.loads(ln)
+                        k = obj.get("kind")
+                        if k == "settings":
+                            # apply to settings.json as well
+                            try:
+                                se = SettingsEntry(**obj)
+                                imported_settings = {"theme": se.theme, "fade_start": float(se.fade_start)}
+                            except Exception:
+                                pass
+                        else:
+                            # validate movement-like lines
+                            Movement(**obj)
+                        f.write(json.dumps(obj, ensure_ascii=False) + "\n")
+                        parsed_any = True
+                    except Exception:
+                        pass
+        if not parsed_any:
+            s = get_settings()
+            return templates.TemplateResponse("setup.html", {
+                "request": request,
+                "error": "File format invalid. Expecting JSON Lines exported by Savion.",
+                "app_name": APP_NAME,
+                "theme": s["theme"]
+            }, status_code=400)
+
+        # If import carried settings, persist them
+        if imported_settings:
+            s = get_settings()
+            s.update(imported_settings)
+            save_settings(s)
+
         return RedirectResponse("/", 303)
+
     else:
         if initial_balance is None:
-            settings = get_settings()
+            s = get_settings()
             return templates.TemplateResponse("setup.html", {
                 "request": request,
                 "error": "Please enter an initial balance or choose Import.",
                 "app_name": APP_NAME,
-                "theme_mode": settings.get("mode", "dark")
+                "theme": s["theme"]
             }, status_code=400)
         entry = Movement(
             kind="setup",
@@ -219,7 +279,7 @@ async def add_movement(
     guard = ensure_setup_page()
     if guard: return guard
 
-    rows = read_ledger()
+    rows = read_movements()
     balance = compute_balance(rows)
 
     delta = float(amount) if action == "add" else -float(amount)
@@ -243,6 +303,10 @@ async def export_ledger():
     guard = ensure_setup_page()
     if guard: return guard
 
+    # Ensure latest settings snapshot is recorded in ledger before export
+    s = get_settings()
+    append_settings_to_ledger(s)
+
     if not os.path.exists(LEDGER_PATH):
         return PlainTextResponse("No ledger available.", status_code=404)
     filename = f"savion-ledger-{datetime.datetime.utcnow().strftime('%Y%m%dT%H%M%SZ')}.jsonl"
@@ -256,12 +320,12 @@ async def reset_get(request: Request):
     a = random.randint(20, 60)
     b = random.randint(5, 15)
     op = random.choice(["+","-"])
-    settings = get_settings()
+    s = get_settings()
     return templates.TemplateResponse("reset.html", {
         "request": request,
         "a": a, "b": b, "op": op,
         "app_name": APP_NAME,
-        "theme_mode": settings.get("mode", "dark")
+        "theme": s["theme"]
     })
 
 @app.post("/reset", response_class=HTMLResponse)
@@ -278,8 +342,7 @@ async def reset_post(
 
     expected = a + b if op == "+" else a - b
     if confirm_text.strip().upper() != "RESET" or math_answer != expected:
-        import random
-        settings = get_settings()
+        s = get_settings()
         return templates.TemplateResponse("reset.html", {
             "request": request,
             "error": "Verification failed. Type RESET and solve the math correctly.",
@@ -287,12 +350,13 @@ async def reset_post(
             "b": random.randint(5,15),
             "op": random.choice(["+","-"]),
             "app_name": APP_NAME,
-            "theme_mode": settings.get("mode", "dark")
+            "theme": s["theme"]
         }, status_code=400)
 
+    # Log reset and wipe ledger
     if os.path.exists(LEDGER_PATH):
         try:
-            rows = read_ledger()
+            rows = read_movements()
             balance = compute_balance(rows)
             reset_entry = Movement(kind="reset", timestamp=now_iso(), note=f"Reset at balance {balance:.2f}")
             append_entry(reset_entry)
@@ -304,25 +368,27 @@ async def reset_post(
             except FileNotFoundError:
                 pass
 
+    # Reset settings to defaults
+    save_settings(DEFAULT_SETTINGS.copy())
+
     return RedirectResponse("/setup", 303)
 
-# -------- Settings page --------
+# --- Settings page ---
 @app.get("/settings", response_class=HTMLResponse)
 async def settings_get(request: Request):
     s = get_settings()
     return templates.TemplateResponse("settings.html", {
         "request": request,
         "app_name": APP_NAME,
-        "theme_mode": s.get("mode", "dark"),
+        "theme": s["theme"],
         "settings": s
     })
 
 @app.post("/settings", response_class=HTMLResponse)
 async def settings_post(
     request: Request,
-    mode: Literal["dark","light"] = Form(...),
+    theme: Literal["dark","light"] = Form(...),
     fade_start: float = Form(...),
-    theme: str = Form(...),
 ):
     # sanitize fade_start
     try:
@@ -333,10 +399,14 @@ async def settings_post(
         fs = 1.0
 
     s = get_settings()
-    s["mode"] = mode
+    s["theme"] = theme
     s["fade_start"] = fs
-    s["theme"] = theme  # stored but not used yet
+
+    # persist to file AND record a snapshot in ledger for portability
     save_settings(s)
+    # Only append settings to ledger if ledger exists (initialized)
+    if is_initialized():
+        append_settings_to_ledger(s)
 
     return RedirectResponse("/settings", 303)
 

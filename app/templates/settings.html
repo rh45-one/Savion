@@ -3,24 +3,15 @@
 <h2>Settings</h2>
 
 <form action="/settings" method="post" class="card form-grid" style="max-width:720px">
-  <label>Mode
-    <select name="mode" required>
-      <option value="dark" {% if settings.mode == 'dark' %}selected{% endif %}>Dark</option>
-      <option value="light" {% if settings.mode == 'light' %}selected{% endif %}>Light</option>
+  <label>Theme
+    <select name="theme" required>
+      <option value="dark"  {% if settings.theme == 'dark' %}selected{% endif %}>Dark</option>
+      <option value="light" {% if settings.theme == 'light' %}selected{% endif %}>Light</option>
     </select>
   </label>
 
   <label>Fade start (balance where green begins to fade)
     <input type="number" name="fade_start" step="1" min="1" value="{{ settings.fade_start|default(1000) }}" required>
-  </label>
-
-  <label>Theme (not implemented yet)
-    <select name="theme">
-      <option value="classic" {% if settings.theme == 'classic' %}selected{% endif %}>Classic</option>
-      <option value="forest" {% if settings.theme == 'forest' %}selected{% endif %}>Forest</option>
-      <option value="neon" {% if settings.theme == 'neon' %}selected{% endif %}>Neon</option>
-      <option value="solar" {% if settings.theme == 'solar' %}selected{% endif %}>Solar</option>
-    </select>
   </label>
 
   <button type="submit">Save</button>
