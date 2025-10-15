@@ -14,7 +14,7 @@ os.makedirs(DATA_DIR, exist_ok=True)
 
 # --- Default settings ---
 DEFAULT_SETTINGS = {
-    "theme": "dark",       # "dark" | "light" (applied)
+    "theme": "dark",       # "dark" | "light" | "dracula" (applied)
     "fade_start": 1000.0   # balance where green starts to fade toward red
 }
 
@@ -39,7 +39,7 @@ class Movement(BaseModel):
 class SettingsEntry(BaseModel):
     kind: Literal["settings"]
     timestamp: str
-    theme: Literal["dark","light"]
+    theme: Literal["dark","light","dracula"]
     fade_start: float
 
 # --- Helpers ---
@@ -59,7 +59,7 @@ def get_settings() -> dict:
         for k, v in DEFAULT_SETTINGS.items():
             data.setdefault(k, v)
         # sanitize
-        if data.get("theme") not in ("dark", "light"):
+        if data.get("theme") not in ("dark", "light", "dracula"):
             data["theme"] = DEFAULT_SETTINGS["theme"]
         try:
             data["fade_start"] = float(data.get("fade_start", DEFAULT_SETTINGS["fade_start"]))
@@ -387,7 +387,7 @@ async def settings_get(request: Request):
 @app.post("/settings", response_class=HTMLResponse)
 async def settings_post(
     request: Request,
-    theme: Literal["dark","light"] = Form(...),
+    theme: Literal["dark","light","dracula"] = Form(...),
     fade_start: float = Form(...),
 ):
     # sanitize fade_start
@@ -404,7 +404,6 @@ async def settings_post(
 
     # persist to file AND record a snapshot in ledger for portability
     save_settings(s)
-    # Only append settings to ledger if ledger exists (initialized)
     if is_initialized():
         append_settings_to_ledger(s)
 

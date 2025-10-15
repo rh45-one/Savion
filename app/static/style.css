@@ -21,6 +21,18 @@
   --ok: #2e8f2e;
   --border: #e6e9ee;
 }
+/* Dracula theme */
+:root[data-theme="dracula"] {
+  --bg: #282a36;        /* background */
+  --panel: #1f2130;     /* slightly darker than main to separate panels */
+  --soft: #3a3d4e;      /* current-line-ish */
+  --text: #f8f8f2;      /* foreground */
+  --muted: #6272a4;     /* comments */
+  --accent: #bd93f9;    /* purple */
+  --danger: #ff5555;    /* red */
+  --ok: #50fa7b;        /* green */
+  --border: #44475a;    /* border */
+}
 
 /* BASE */
 * { box-sizing: border-box; }
@@ -38,7 +50,7 @@ html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); f
 .desktop-nav a { color: var(--text); text-decoration: none; padding: 8px 10px; border-radius: 10px; }
 .desktop-nav a.danger { color: var(--danger); }
 
-/* Mobile menu button */
+/* Mobile menu button (uses inline SVG in base.html) */
 .hamburger { display: none !important; background: transparent; border: 0; padding: 8px; border-radius: 8px; color: var(--text); }
 .hamburger:focus-visible { outline: 2px solid var(--accent); }
 .hamburger .icon { display: block; width: 24px; height: 24px; fill: currentColor; }
@@ -78,6 +90,7 @@ html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); f
 /* Alerts */
 .alert { background: #2b333d; color: #ffd2d2; border: 1px solid #4a2222; padding: 12px; border-radius: 8px; margin-bottom: 16px; }
 :root[data-theme="light"] .alert { background: #fff4f4; color: #7a1f1f; border-color: #f2c9c9; }
+:root[data-theme="dracula"] .alert { background: #343746; color: #ffbcbc; border-color: #5b2d2d; }
 
 /* Cards & Forms */
 .card { background: var(--panel); border: 1px solid var(--border); padding: 16px; border-radius: 12px; box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
