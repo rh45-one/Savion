@@ -11,7 +11,7 @@
       <div class="container rowflex">
         <h1>{{ app_name }}</h1>
 
-        <!-- Mobile menu button (uses Pictogrammers MDI "menu" icon) -->
+        <!-- Mobile menu button (Pictogrammers MDI "menu") -->
         <button class="hamburger" aria-label="Open menu" aria-expanded="false" aria-controls="mobileMenu">
           <svg class="icon" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false">
             <path d="M3,6H21V8H3V6M3,12H21V14H3V12M3,18H21V20H3V18Z"></path>
@@ -50,10 +50,10 @@
     </footer>
 
     <script>
+      // Mobile menu toggle (unchanged behavior, fixed visibility issues)
       (function () {
         var btn = document.querySelector('.hamburger');
         var menu = document.getElementById('mobileMenu');
-
         if (!btn || !menu) return;
 
         function closeMenu() {
@@ -68,28 +68,53 @@
           menu.removeAttribute('hidden');
           document.body.classList.add('menu-open');
         }
-
         btn.addEventListener('click', function () {
           var open = btn.getAttribute('aria-expanded') === 'true';
           open ? closeMenu() : openMenu();
         });
-
-        // Close on link click
         menu.addEventListener('click', function (e) {
           if (e.target.tagName === 'A') closeMenu();
         });
-
-        // Close on Esc
         document.addEventListener('keydown', function (e) {
           if (e.key === 'Escape') closeMenu();
         });
-
-        // Close on outside click
         document.addEventListener('click', function (e) {
           if (menu.hasAttribute('hidden')) return;
           var within = e.target.closest('.mobile-menu, .hamburger');
           if (!within) closeMenu();
         });
+      })();
+
+      // Glass interaction: pointer-tracked highlights/refraction
+      (function () {
+        var mediaReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (mediaReduced) return;
+
+        function attach(el) {
+          if (!el) return;
+          el.addEventListener('pointermove', function (e) {
+            var r = el.getBoundingClientRect();
+            var x = (e.clientX - r.left) / r.width;
+            var y = (e.clientY - r.top) / r.height;
+            el.style.setProperty('--mx', x.toFixed(4));
+            el.style.setProperty('--my', y.toFixed(4));
+          });
+          el.addEventListener('pointerleave', function () {
+            el.style.setProperty('--mx', 0.5);
+            el.style.setProperty('--my', 0.5);
+          });
+        }
+
+        // Buttons + nav items + cards get subtle responsiveness
+        var targets = document.querySelectorAll(
+          ':root[data-theme="liquid-glass"] button, ' +
+          ':root[data-theme="liquid-glass-light"] button, ' +
+          ':root[data-theme="liquid-glass"] .desktop-nav a, ' +
+          ':root[data-theme="liquid-glass-light"] .desktop-nav a, ' +
+          ':root[data-theme="liquid-glass"] #mobileMenu a, ' +
+          ':root[data-theme="liquid-glass-light"] #mobileMenu a'
+        );
+        targets.forEach(attach);
       })();
     </script>
   </body>
