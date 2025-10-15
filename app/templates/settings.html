@@ -2,7 +2,7 @@
 {% block content %}
 <h2>{{ t.settings_title }}</h2>
 
-<form action="/settings" method="post" class="card form-grid settings-form">
+<form action="/settings" method="post" class="card form-grid">
   <label>{{ t.settings_theme }}
     <select name="theme" required>
       <option value="dark"    {% if settings.theme == 'dark' %}selected{% endif %}>Dark</option>

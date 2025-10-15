@@ -185,44 +185,39 @@ details.filter-box textarea::placeholder {
   filter: invert(1) brightness(1.2);
 }
 
-/* === Setup grid equal-height cards === */
+/* === Setup page: two equal-height cards in a responsive grid === */
 .setup-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 16px;
-  align-items: stretch; /* stretch columns to equal height */
 }
 
+/* Each setup option is a normal .card made flexible */
 .setup-card {
   display: flex;
   flex-direction: column;
-  height: 100%;
 }
 
-.setup-card .card-body {
+/* Form fills remaining vertical space so the action row sits at bottom */
+.setup-form {
+  margin-top: 8px;
   display: flex;
   flex-direction: column;
   gap: 10px;
-  flex: 1 1 auto; /* fill available height */
+  flex: 1 1 auto;
 }
 
 .setup-card .actions {
-  margin-top: auto;           /* push actions to the bottom */
+  margin-top: auto;
   display: flex;
   gap: 8px;
   justify-content: flex-end;
 }
 
-/* Small screens: maintain nice spacing */
+/* Mobile tweaks */
 @media (max-width: 600px) {
-  .setup-grid {
-    gap: 12px;
-  }
+  .setup-grid { gap: 12px; grid-template-columns: 1fr; }
 }
 
-/* Settings form sizing/centering */
-.settings-form {
-  max-width: 720px;
-  margin: 0 auto;
-  width: 100%;
-}
+/* (If you previously added a .settings-form with custom width, you can safely remove it.
+   Settings now uses a standard .card so margins/width match the home page.) */
