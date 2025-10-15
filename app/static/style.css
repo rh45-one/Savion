@@ -134,3 +134,14 @@ button.danger { background: var(--danger); }
 a, button, input, select { touch-action: manipulation; }
 input, select { min-height: 44px; }
 .desktop-nav a { min-height: 40px; }
+
+/* Vertical spacing between cards */
+main .card + .card {
+  margin-top: 16px;
+}
+
+@media (min-width: 700px) {
+  main .card + .card {
+    margin-top: 20px;
+  }
+}
