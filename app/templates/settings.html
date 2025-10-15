@@ -5,9 +5,11 @@
 <form action="/settings" method="post" class="card form-grid" style="max-width:720px">
   <label>Theme
     <select name="theme" required>
-      <option value="dark"    {% if settings.theme == 'dark' %}selected{% endif %}>Dark</option>
-      <option value="light"   {% if settings.theme == 'light' %}selected{% endif %}>Light</option>
-      <option value="dracula" {% if settings.theme == 'dracula' %}selected{% endif %}>Dracula</option>
+      <option value="dark"               {% if settings.theme == 'dark' %}selected{% endif %}>Dark</option>
+      <option value="light"              {% if settings.theme == 'light' %}selected{% endif %}>Light</option>
+      <option value="dracula"            {% if settings.theme == 'dracula' %}selected{% endif %}>Dracula</option>
+      <option value="liquid-glass"       {% if settings.theme == 'liquid-glass' %}selected{% endif %}>Liquid Glass</option>
+      <option value="liquid-glass-light" {% if settings.theme == 'liquid-glass-light' %}selected{% endif %}>Liquid Glass Light</option>
     </select>
   </label>
 
