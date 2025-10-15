@@ -76,11 +76,22 @@ async def index(request: Request):
 
     rows = read_ledger()
     balance = compute_balance(rows)
+
+    # ---- Dynamic color: fade from green (>=1000) to red (0), red if negative ----
+    if balance <= 0:
+        hue = 0.0  # red
+    else:
+        ratio = min(balance, 1000.0) / 1000.0  # 0..1
+        hue = 120.0 * ratio  # 120=green, 0=red
+    balance_color = f"hsl({hue:.0f}, 70%, 60%)"
+
     movements = [r for r in rows if r.kind == "movement"]
     movements.sort(key=lambda r: r.timestamp, reverse=True)
+
     return templates.TemplateResponse("index.html", {
         "request": request,
         "balance": f"{balance:.2f}",
+        "balance_color": balance_color,
         "movements": movements[:200],
         "app_name": APP_NAME
     })

@@ -2,7 +2,8 @@
 {% block content %}
 <section class="balance">
   <h2>Current Balance</h2>
-  <div class="balance-amount">{{ balance }}</div>
+  <!-- Inline style receives the computed color from the server -->
+  <div class="balance-amount" style="color: {{ balance_color }};">{{ balance }}</div>
 </section>
 
 <section class="new-movement">
