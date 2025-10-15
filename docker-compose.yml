@@ -1,0 +1,13 @@
+services:
+  savion:
+    build: .
+    container_name: savion
+    ports:
+      - "8000:8000"
+    environment:
+      - DATA_DIR=/data
+    volumes:
+      - savion_data:/data
+    restart: unless-stopped
+volumes:
+  savion_data:

@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <title>{{ app_name }}</title>
+    <link rel="stylesheet" href="/static/style.css">
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="container rowflex">
+        <h1>{{ app_name }}</h1>
+        <nav class="nav">
+          <a href="/">Home</a>
+          <a href="/export">Export</a>
+          <a href="/reset" class="danger">Reset</a>
+        </nav>
+      </div>
+    </header>
+    <main class="container">
+      {% if error %}
+        <div class="alert" role="alert">{{ error }}</div>
+      {% endif %}
+      {% block content %}{% endblock %}
+    </main>
+    <footer class="footer">
+      <div class="container">
+        <small>&copy; {{ app_name }} — Simple, local-first money tracker.</small>
+      </div>
+    </footer>
+  </body>
+</html>

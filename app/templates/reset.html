@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Reset Savion</h2>
+<p class="warning">This will erase all data and return you to setup. You can <a href="/export">export</a> your ledger before continuing.</p>
+
+<form action="/reset" method="post" class="card danger-card">
+  <label>Type <b>RESET</b> to confirm
+    <input type="text" name="confirm_text" required>
+  </label>
+  <div class="captcha">
+    <span>Solve: {{ a }} {{ op }} {{ b }} =</span>
+    <input type="number" name="math_answer" required>
+    <input type="hidden" name="a" value="{{ a }}">
+    <input type="hidden" name="b" value="{{ b }}">
+    <input type="hidden" name="op" value="{{ op }}">
+  </div>
+  <br />
+  <button type="submit" class="danger">Erase everything</button>
+</form>
+{% endblock %}

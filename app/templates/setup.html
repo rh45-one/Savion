@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Welcome to Savion</h2>
+<p>Set an initial balance or import a previously exported ledger file to continue where you left off.</p>
+
+<div class="grid-2">
+  <form action="/setup" method="post" class="card">
+    <h3>Fresh setup</h3>
+    <input type="hidden" name="setup_mode" value="fresh">
+    <label>Initial balance
+      <input type="number" name="initial_balance" step="0.01" inputmode="decimal" required>
+    </label>
+    <button type="submit">Initialize</button>
+  </form>
+
+  <form action="/setup" method="post" enctype="multipart/form-data" class="card">
+    <h3>Import existing ledger</h3>
+    <input type="hidden" name="setup_mode" value="import">
+    <label>Ledger file (.jsonl)
+      <input type="file" name="ledger_file" accept=".jsonl,text/plain" required>
+    </label>
+    <button type="submit">Import</button>
+  </form>
+</div>
+{% endblock %}
