@@ -1,4 +1,4 @@
-# Savion — concise reference
+# Savion
 
 What
 - Minimal personal ledger web app (FastAPI + Jinja2). Record movements, export/import JSONL ledger, reset safely.
