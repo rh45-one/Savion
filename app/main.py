@@ -69,7 +69,6 @@ EN_TRANSLATIONS: Dict[str, str] = {
     "filters_clear": "Clear",
 }
 
-# External (non-English) translations live here (optional file).
 TRANSLATIONS_PATH = os.path.join(os.path.dirname(__file__), "translations.json")
 _EXTERNAL_TRANSLATIONS: Dict[str, Dict[str, str]] = {}
 
@@ -78,7 +77,6 @@ def _load_external_translations() -> Dict[str, Dict[str, str]]:
         with open(TRANSLATIONS_PATH, "r", encoding="utf-8") as f:
             data = json.load(f)
         if isinstance(data, dict):
-            # Ensure values are dicts of strings
             out: Dict[str, Dict[str, str]] = {}
             for lang, bundle in data.items():
                 if isinstance(bundle, dict):
@@ -88,14 +86,9 @@ def _load_external_translations() -> Dict[str, Dict[str, str]]:
         pass
     return {}
 
-# Load once at startup
 _EXTERNAL_TRANSLATIONS = _load_external_translations()
 
 def t_for(lang: str) -> Dict[str, str]:
-    """
-    Return translations for `lang`, merging external bundle over English fallback.
-    If not found, return English.
-    """
     lang = (lang or "en").lower()
     if lang == "en":
         return EN_TRANSLATIONS
@@ -108,11 +101,11 @@ def t_for(lang: str) -> Dict[str, str]:
 
 # --- Default settings ---
 DEFAULT_SETTINGS = {
-    "theme": "dark",        # "dark" | "light" | "dracula"
-    "fade_start": 1000.0,   # where green starts to fade to red
-    "currency": "EUR",      # "EUR" | "USD" | "GBP"
-    "timezone": "Europe/Madrid",  # IANA tz for display + new log timestamps
-    "language": "en"        # "en" | "es" | "fr"
+    "theme": "dark",
+    "fade_start": 1000.0,
+    "currency": "EUR",
+    "timezone": "Europe/Madrid",
+    "language": "en"
 }
 
 app = FastAPI(title=APP_NAME)
@@ -139,7 +132,7 @@ class SettingsEntry(BaseModel):
     theme: Literal["dark","light","dracula"]
     fade_start: float
     currency: Optional[Literal["EUR","USD","GBP"]] = None
-    timezone: Optional[str] = None  # IANA tz
+    timezone: Optional[str] = None
     language: Optional[Literal["en","es","fr"]] = None
 
 # --- Helpers ---
@@ -164,7 +157,6 @@ def now_iso_in_tz(tz_name: str) -> str:
     return datetime.datetime.now(tz=tz).isoformat()
 
 def parse_ts(ts: str) -> datetime.datetime:
-    """Parse ISO timestamp to aware datetime; fall back to epoch if invalid."""
     try:
         s = ts.replace("Z", "+00:00")
         dt = datetime.datetime.fromisoformat(s)
@@ -175,7 +167,6 @@ def parse_ts(ts: str) -> datetime.datetime:
         return datetime.datetime(1970, 1, 1, tzinfo=datetime.timezone.utc)
 
 def format_display_date(ts: str, tz_name: str) -> str:
-    """Return European-format date: DD/MM/YYYY HH:MM in target tz."""
     dt = parse_ts(ts)
     try:
         tz = ZoneInfo(tz_name)
@@ -185,7 +176,6 @@ def format_display_date(ts: str, tz_name: str) -> str:
     return dt.strftime("%d/%m/%Y %H:%M")
 
 def format_now_preview(tz_name: str) -> str:
-    """Server-side preview for current time in tz, DD/MM/YYYY HH:MM."""
     try:
         tz = ZoneInfo(tz_name)
     except Exception:
@@ -203,10 +193,8 @@ def get_settings() -> dict:
     try:
         with open(SETTINGS_PATH, "r", encoding="utf-8") as f:
             data = json.load(f)
-        # ensure defaults
         for k, v in DEFAULT_SETTINGS.items():
             data.setdefault(k, v)
-        # sanitize
         if data.get("theme") not in ("dark","light","dracula"):
             data["theme"] = DEFAULT_SETTINGS["theme"]
         try:
@@ -287,7 +275,6 @@ def ensure_setup_page():
         return RedirectResponse(url="/setup", status_code=303)
     return None
 
-# Currency formatting
 def format_currency(value: float, currency: str) -> str:
     sign = "-" if value < 0 else ""
     amt = f"{abs(value):.2f}"
@@ -295,7 +282,7 @@ def format_currency(value: float, currency: str) -> str:
         return f"{sign}${amt}"
     if currency == "GBP":
         return f"{sign}£{amt}"
-    return f"{sign}{amt} €"  # EUR
+    return f"{sign}{amt} €"
 
 # --- Routes ---
 @app.get("/", response_class=HTMLResponse)
@@ -310,7 +297,6 @@ async def index(request: Request):
     rows = read_movements()
     balance = compute_balance(rows)
 
-    # color fade using settings.fade_start
     fade_start = float(settings["fade_start"])
     if balance <= 0:
         hue = 0.0
@@ -321,19 +307,25 @@ async def index(request: Request):
         hue = 120.0 * ratio
     balance_color = f"hsl({hue:.0f}, 70%, 60%)"
 
-    # Currency + tz
     currency = settings["currency"]
     tz_name = settings["timezone"]
     balance_display = format_currency(balance, currency)
 
-    # --- Filters from querystring ---
+    # Filters from querystring
     qp = request.query_params
     q = (qp.get("q") or "").strip()
     action_filter = (qp.get("action") or "all").lower()
-    start_str = (qp.get("start") or "").strip()  # yyyy-mm-dd
+    start_str = (qp.get("start") or "").strip()
     end_str = (qp.get("end") or "").strip()
     min_str = (qp.get("min") or "").strip()
     max_str = (qp.get("max") or "").strip()
+
+    # Detect if any filter is active to auto-open the collapsible
+    filters_open = any([
+        q,
+        action_filter in ("add", "withdraw"),
+        start_str, end_str, min_str, max_str
+    ])
 
     # Parse dates/amounts
     start_date = None
@@ -414,6 +406,7 @@ async def index(request: Request):
         "end_str": end_str,
         "min_str": min_str,
         "max_str": max_str,
+        "filters_open": filters_open,
     })
 
 @app.get("/setup", response_class=HTMLResponse)
@@ -568,7 +561,6 @@ async def export_ledger():
     guard = ensure_setup_page()
     if guard: return guard
 
-    # Ensure latest settings snapshot (includes currency/timezone/language)
     s = get_settings()
     append_settings_to_ledger(s)
 
@@ -627,7 +619,6 @@ async def reset_post(
             "lang": lang
         }, status_code=400)
 
-    # Log reset and wipe ledger
     if os.path.exists(LEDGER_PATH):
         try:
             rows = read_movements()
@@ -642,12 +633,9 @@ async def reset_post(
             except FileNotFoundError:
                 pass
 
-    # Reset settings to defaults (language -> EN)
     save_settings(DEFAULT_SETTINGS.copy())
-
     return RedirectResponse("/setup", 303)
 
-# --- Settings page ---
 @app.get("/settings", response_class=HTMLResponse)
 async def settings_get(request: Request):
     s = get_settings()
@@ -673,7 +661,6 @@ async def settings_post(
     timezone: str = Form(...),
     language: Literal["en","es","fr"] = Form(...),
 ):
-    # sanitize fade_start
     try:
         fs = float(fade_start)
     except Exception:
@@ -688,7 +675,6 @@ async def settings_post(
     s["timezone"] = validate_timezone(timezone)
     s["language"] = validate_language(language)
 
-    # persist & snapshot
     save_settings(s)
     if is_initialized():
         append_settings_to_ledger(s)

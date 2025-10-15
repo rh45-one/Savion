@@ -145,3 +145,6 @@ main .card + .card {
     margin-top: 20px;
   }
 }
+
+details.filter-box { border: 1px solid var(--border); border-radius: 12px; padding: 8px 12px; background: var(--soft); }
+details.filter-box > summary { cursor: pointer; font-weight: 600; }
