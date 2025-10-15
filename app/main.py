@@ -9,7 +9,14 @@ import os, json, datetime, threading, random
 APP_NAME = "Savion"
 DATA_DIR = os.environ.get("DATA_DIR", "/data")
 LEDGER_PATH = os.path.join(DATA_DIR, "ledger.jsonl")
+SETTINGS_PATH = os.path.join(DATA_DIR, "settings.json")
 os.makedirs(DATA_DIR, exist_ok=True)
+
+DEFAULT_SETTINGS = {
+    "mode": "dark",          # "dark" | "light"
+    "fade_start": 1000.0,    # where green starts to fade to red
+    "theme": "classic"       # placeholder; not applied yet
+}
 
 app = FastAPI(title=APP_NAME)
 app.mount("/static", StaticFiles(directory=os.path.join(os.path.dirname(__file__), "static")), name="static")
@@ -64,11 +71,32 @@ def append_entry(entry: Movement):
         with open(LEDGER_PATH, "a", encoding="utf-8") as f:
             f.write(json.dumps(entry.dict(), ensure_ascii=False) + "\n")
 
+# --------- Settings helpers ----------
+def get_settings() -> dict:
+    if not os.path.exists(SETTINGS_PATH):
+        save_settings(DEFAULT_SETTINGS.copy())
+        return DEFAULT_SETTINGS.copy()
+    try:
+        with open(SETTINGS_PATH, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        # ensure defaults exist
+        for k, v in DEFAULT_SETTINGS.items():
+            data.setdefault(k, v)
+        return data
+    except Exception:
+        return DEFAULT_SETTINGS.copy()
+
+def save_settings(s: dict):
+    with write_lock:
+        with open(SETTINGS_PATH, "w", encoding="utf-8") as f:
+            json.dump(s, f)
+
 def ensure_setup_page():
     if not is_initialized():
         return RedirectResponse(url="/setup", status_code=303)
     return None
 
+# ---------- Views ----------
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
     guard = ensure_setup_page()
@@ -77,11 +105,18 @@ async def index(request: Request):
     rows = read_ledger()
     balance = compute_balance(rows)
 
-    # ---- Dynamic color: fade from green (>=1000) to red (0), red if negative ----
+    # color fade using settings.fade_start
+    settings = get_settings()
+    fade_start = float(settings.get("fade_start", DEFAULT_SETTINGS["fade_start"]))
+    if fade_start <= 0:
+        fade_start = 1.0  # safety
+
     if balance <= 0:
         hue = 0.0  # red
+    elif balance >= fade_start:
+        hue = 120.0  # green
     else:
-        ratio = min(balance, 1000.0) / 1000.0  # 0..1
+        ratio = max(0.0, min(balance / fade_start, 1.0))
         hue = 120.0 * ratio  # 120=green, 0=red
     balance_color = f"hsl({hue:.0f}, 70%, 60%)"
 
@@ -93,16 +128,19 @@ async def index(request: Request):
         "balance": f"{balance:.2f}",
         "balance_color": balance_color,
         "movements": movements[:200],
-        "app_name": APP_NAME
+        "app_name": APP_NAME,
+        "theme_mode": settings.get("mode", "dark")
     })
 
 @app.get("/setup", response_class=HTMLResponse)
 async def setup_get(request: Request):
     if is_initialized():
         return RedirectResponse("/", 303)
+    settings = get_settings()
     return templates.TemplateResponse("setup.html", {
         "request": request,
-        "app_name": APP_NAME
+        "app_name": APP_NAME,
+        "theme_mode": settings.get("mode", "dark")
     })
 
 @app.post("/setup", response_class=HTMLResponse)
@@ -117,19 +155,23 @@ async def setup_post(
 
     if setup_mode == "import":
         if not ledger_file:
+            settings = get_settings()
             return templates.TemplateResponse("setup.html", {
                 "request": request,
                 "error": "Please choose a ledger file to import.",
-                "app_name": APP_NAME
+                "app_name": APP_NAME,
+                "theme_mode": settings.get("mode", "dark")
             }, status_code=400)
         content = await ledger_file.read()
         text = content.decode("utf-8", errors="ignore")
         lines = [ln.strip() for ln in text.splitlines() if ln.strip()]
         if not lines:
+            settings = get_settings()
             return templates.TemplateResponse("setup.html", {
                 "request": request,
                 "error": "Uploaded file is empty.",
-                "app_name": APP_NAME
+                "app_name": APP_NAME,
+                "theme_mode": settings.get("mode", "dark")
             }, status_code=400)
         parsed = []
         for ln in lines:
@@ -138,10 +180,12 @@ async def setup_post(
                 Movement(**obj)
                 parsed.append(obj)
             except Exception:
+                settings = get_settings()
                 return templates.TemplateResponse("setup.html", {
                     "request": request,
                     "error": "File format invalid. Expecting JSON Lines exported by Savion.",
-                    "app_name": APP_NAME
+                    "app_name": APP_NAME,
+                    "theme_mode": settings.get("mode", "dark")
                 }, status_code=400)
         with write_lock:
             with open(LEDGER_PATH, "w", encoding="utf-8") as f:
@@ -150,10 +194,12 @@ async def setup_post(
         return RedirectResponse("/", 303)
     else:
         if initial_balance is None:
+            settings = get_settings()
             return templates.TemplateResponse("setup.html", {
                 "request": request,
                 "error": "Please enter an initial balance or choose Import.",
-                "app_name": APP_NAME
+                "app_name": APP_NAME,
+                "theme_mode": settings.get("mode", "dark")
             }, status_code=400)
         entry = Movement(
             kind="setup",
@@ -210,10 +256,12 @@ async def reset_get(request: Request):
     a = random.randint(20, 60)
     b = random.randint(5, 15)
     op = random.choice(["+","-"])
+    settings = get_settings()
     return templates.TemplateResponse("reset.html", {
         "request": request,
         "a": a, "b": b, "op": op,
-        "app_name": APP_NAME
+        "app_name": APP_NAME,
+        "theme_mode": settings.get("mode", "dark")
     })
 
 @app.post("/reset", response_class=HTMLResponse)
@@ -230,13 +278,16 @@ async def reset_post(
 
     expected = a + b if op == "+" else a - b
     if confirm_text.strip().upper() != "RESET" or math_answer != expected:
+        import random
+        settings = get_settings()
         return templates.TemplateResponse("reset.html", {
             "request": request,
             "error": "Verification failed. Type RESET and solve the math correctly.",
             "a": random.randint(20,60),
             "b": random.randint(5,15),
             "op": random.choice(["+","-"]),
-            "app_name": APP_NAME
+            "app_name": APP_NAME,
+            "theme_mode": settings.get("mode", "dark")
         }, status_code=400)
 
     if os.path.exists(LEDGER_PATH):
@@ -254,6 +305,40 @@ async def reset_post(
                 pass
 
     return RedirectResponse("/setup", 303)
+
+# -------- Settings page --------
+@app.get("/settings", response_class=HTMLResponse)
+async def settings_get(request: Request):
+    s = get_settings()
+    return templates.TemplateResponse("settings.html", {
+        "request": request,
+        "app_name": APP_NAME,
+        "theme_mode": s.get("mode", "dark"),
+        "settings": s
+    })
+
+@app.post("/settings", response_class=HTMLResponse)
+async def settings_post(
+    request: Request,
+    mode: Literal["dark","light"] = Form(...),
+    fade_start: float = Form(...),
+    theme: str = Form(...),
+):
+    # sanitize fade_start
+    try:
+        fs = float(fade_start)
+    except Exception:
+        fs = DEFAULT_SETTINGS["fade_start"]
+    if fs <= 0:
+        fs = 1.0
+
+    s = get_settings()
+    s["mode"] = mode
+    s["fade_start"] = fs
+    s["theme"] = theme  # stored but not used yet
+    save_settings(s)
+
+    return RedirectResponse("/settings", 303)
 
 @app.get("/healthz")
 async def health():

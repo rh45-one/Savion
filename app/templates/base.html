@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="{{ theme_mode|default('dark') }}">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
@@ -13,6 +13,7 @@
         <nav class="nav">
           <a href="/">Home</a>
           <a href="/export">Export</a>
+          <a href="/settings">Settings</a>
           <a href="/reset" class="danger">Reset</a>
         </nav>
       </div>
