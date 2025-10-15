@@ -11,9 +11,11 @@
       <div class="container rowflex">
         <h1>{{ app_name }}</h1>
 
-        <!-- Hamburger (mobile only) -->
+        <!-- Mobile menu button (uses Pictogrammers MDI "menu" icon) -->
         <button class="hamburger" aria-label="Open menu" aria-expanded="false" aria-controls="mobileMenu">
-          <span class="bar"></span><span class="bar"></span><span class="bar"></span>
+          <svg class="icon" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false">
+            <path d="M3,6H21V8H3V6M3,12H21V14H3V12M3,18H21V20H3V18Z"></path>
+          </svg>
         </button>
 
         <!-- Desktop nav -->
@@ -56,11 +58,13 @@
 
         function closeMenu() {
           btn.setAttribute('aria-expanded', 'false');
+          btn.setAttribute('aria-label', 'Open menu');
           menu.setAttribute('hidden', '');
           document.body.classList.remove('menu-open');
         }
         function openMenu() {
           btn.setAttribute('aria-expanded', 'true');
+          btn.setAttribute('aria-label', 'Close menu');
           menu.removeAttribute('hidden');
           document.body.classList.add('menu-open');
         }
@@ -80,7 +84,7 @@
           if (e.key === 'Escape') closeMenu();
         });
 
-        // Optional: close on outside click
+        // Close on outside click
         document.addEventListener('click', function (e) {
           if (menu.hasAttribute('hidden')) return;
           var within = e.target.closest('.mobile-menu, .hamburger');
