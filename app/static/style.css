@@ -192,10 +192,20 @@ details.filter-box textarea::placeholder {
   gap: 16px;
 }
 
-/* Each setup option is a normal .card made flexible */
+/* Each setup option is a normal .card made flexible and equal height */
 .setup-card {
   display: flex;
   flex-direction: column;
+  height: 100%;
+}
+
+/* Headline/lead spacing inside the card */
+.setup-title {
+  margin: 0 0 6px 0;
+}
+.setup-sub {
+  margin: 0 0 12px 0;
+  color: var(--muted);
 }
 
 /* Form fills remaining vertical space so the action row sits at bottom */
@@ -205,8 +215,10 @@ details.filter-box textarea::placeholder {
   flex-direction: column;
   gap: 10px;
   flex: 1 1 auto;
+  min-height: 0; /* prevents overflow from forcing extra height */
 }
 
+/* Make the button row hug the bottom of each card */
 .setup-card .actions {
   margin-top: auto;
   display: flex;
@@ -219,5 +231,46 @@ details.filter-box textarea::placeholder {
   .setup-grid { gap: 12px; grid-template-columns: 1fr; }
 }
 
-/* (If you previously added a .settings-form with custom width, you can safely remove it.
-   Settings now uses a standard .card so margins/width match the home page.) */
+/* === Themed file input so it matches the site === */
+input[type="file"] {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--soft);
+  color: var(--text);
+  line-height: 1.2;
+}
+
+/* Style the “Choose file” button (Chromium/WebKit) */
+input[type="file"]::file-selector-button {
+  margin-right: 10px;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 12px;
+  cursor: pointer;
+  color: #fff;
+  background: var(--primary, #4f7cf3);
+}
+input[type="file"]::file-selector-button:hover {
+  filter: brightness(1.05);
+}
+
+/* Firefox file button */
+input[type="file"]::-moz-file-upload-button {
+  margin-right: 10px;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 12px;
+  cursor: pointer;
+  color: #fff;
+  background: var(--primary, #4f7cf3);
+}
+
+/* Ensure consistent height with text/number inputs */
+input[type="file"],
+input[type="text"],
+input[type="number"],
+select {
+  min-height: 44px;
+}
