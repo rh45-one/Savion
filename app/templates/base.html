@@ -10,24 +10,76 @@
     <header class="topbar">
       <div class="container rowflex">
         <h1>{{ app_name }}</h1>
-        <nav class="nav">
+
+        <!-- Hamburger (mobile only) -->
+        <button class="hamburger" aria-label="Open menu" aria-expanded="false" aria-controls="mobileMenu">
+          <span class="bar"></span><span class="bar"></span><span class="bar"></span>
+        </button>
+
+        <!-- Desktop nav -->
+        <nav class="nav desktop-nav">
           <a href="/">Home</a>
           <a href="/export">Export</a>
           <a href="/settings">Settings</a>
           <a href="/reset" class="danger">Reset</a>
         </nav>
       </div>
+
+      <!-- Mobile dropdown nav -->
+      <nav id="mobileMenu" class="mobile-menu" hidden>
+        <a href="/">Home</a>
+        <a href="/export">Export</a>
+        <a href="/settings">Settings</a>
+        <a href="/reset" class="danger">Reset</a>
+      </nav>
     </header>
+
     <main class="container">
       {% if error %}
         <div class="alert" role="alert">{{ error }}</div>
       {% endif %}
       {% block content %}{% endblock %}
     </main>
+
     <footer class="footer">
       <div class="container">
         <small>&copy; {{ app_name }} — Simple, local-first money tracker.</small>
       </div>
     </footer>
+
+    <script>
+      (function () {
+        var btn = document.querySelector('.hamburger');
+        var menu = document.getElementById('mobileMenu');
+
+        if (!btn || !menu) return;
+
+        function closeMenu() {
+          btn.setAttribute('aria-expanded', 'false');
+          menu.setAttribute('hidden', '');
+          document.body.classList.remove('menu-open');
+        }
+        function openMenu() {
+          btn.setAttribute('aria-expanded', 'true');
+          menu.removeAttribute('hidden');
+          document.body.classList.add('menu-open');
+        }
+
+        btn.addEventListener('click', function () {
+          var open = btn.getAttribute('aria-expanded') === 'true';
+          open ? closeMenu() : openMenu();
+        });
+
+        // Close on link click
+        menu.addEventListener('click', function (e) {
+          if (e.target.tagName === 'A') closeMenu();
+        });
+
+        // Close on Esc
+        document.addEventListener('keydown', function (e) {
+          if (e.key === 'Escape') closeMenu();
+        });
+      })();
+    </script>
   </body>
 </html>

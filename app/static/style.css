@@ -24,16 +24,36 @@
 
 /* BASE */
 * { box-sizing: border-box; }
-html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, 'Helvetica Neue', Arial, 'Noto Sans', 'Apple Color Emoji', 'Segoe UI Emoji'; }
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Helvetica Neue,Arial,Noto Sans,Apple Color Emoji,Segoe UI Emoji; }
 .container { max-width: 960px; margin: 0 auto; padding: 16px; overflow-x: hidden; }
 
 /* Topbar */
-.topbar { background: var(--panel); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 10; }
+.topbar { background: var(--panel); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 20; }
 .topbar h1 { margin: 0; font-size: 18px; }
 .rowflex { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+
+/* Desktop nav */
 .nav { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.nav a { color: var(--text); text-decoration: none; padding: 8px 10px; border-radius: 10px; }
-.nav a.danger { color: var(--danger); }
+.desktop-nav a { color: var(--text); text-decoration: none; padding: 8px 10px; border-radius: 10px; }
+.desktop-nav a.danger { color: var(--danger); }
+
+/* Mobile hamburger */
+.hamburger { display: none; background: transparent; border: 0; padding: 8px; border-radius: 8px; }
+.hamburger:focus-visible { outline: 2px solid var(--accent); }
+.hamburger .bar { display: block; width: 24px; height: 2px; background: var(--text); margin: 5px 0; border-radius: 2px; }
+
+/* Mobile dropdown menu */
+.mobile-menu { display: none; background: var(--panel); border-bottom: 1px solid var(--border); box-shadow: 0 8px 24px rgba(0,0,0,0.2); }
+.mobile-menu a { display: block; padding: 12px 16px; color: var(--text); text-decoration: none; border-top: 1px solid var(--border); }
+.mobile-menu a:first-child { border-top: 0; }
+.mobile-menu a.danger { color: var(--danger); }
+.mobile-menu:not([hidden]) { display: block; }
+
+/* Responsive show/hide */
+@media (max-width: 720px) {
+  .desktop-nav { display: none; }
+  .hamburger { display: inline-flex; align-items: center; justify-content: center; }
+}
 
 /* Footer */
 .footer { border-top: 1px solid var(--border); margin-top: 40px; color: var(--muted); }
@@ -53,6 +73,7 @@ input[type="text"], input[type="number"], select, input[type="file"] {
 button { background: var(--accent); color: #fff; border: 0; padding: 12px 16px; border-radius: 12px; cursor: pointer; font-weight: 700; min-height: 44px; }
 button.danger { background: var(--danger); }
 
+/* Forms grid */
 .form-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
 @media (min-width: 640px) {
   .form-grid { grid-template-columns: repeat(2, 1fr); }
@@ -83,4 +104,4 @@ button.danger { background: var(--danger); }
 /* Accessibility & Touch targets */
 a, button, input, select { touch-action: manipulation; }
 input, select { min-height: 44px; }
-.nav a { min-height: 40px; }
+.desktop-nav a { min-height: 40px; }
