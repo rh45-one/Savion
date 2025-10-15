@@ -13,6 +13,9 @@ LEDGER_PATH = os.path.join(DATA_DIR, "ledger.jsonl")
 SETTINGS_PATH = os.path.join(DATA_DIR, "settings.json")
 os.makedirs(DATA_DIR, exist_ok=True)
 
+# --- Supported languages ---
+SUPPORTED_LANGS = ("en", "es", "fr", "zh", "pt", "ja", "de", "it")
+
 # --- Embedded English translations (fallback) ---
 EN_TRANSLATIONS: Dict[str, str] = {
     "nav_home": "Home",
@@ -46,6 +49,11 @@ EN_TRANSLATIONS: Dict[str, str] = {
     "language_en": "English (EN)",
     "language_es": "Español (ES)",
     "language_fr": "Français (FR)",
+    "language_zh": "Chinese (ZH)",
+    "language_pt": "Português (PT)",
+    "language_ja": "日本語 (JA)",
+    "language_de": "Deutsch (DE)",
+    "language_it": "Italiano (IT)",
     "settings_save": "Save",
     "tz_preview_prefix": "Current time in",
     # Errors
@@ -69,6 +77,7 @@ EN_TRANSLATIONS: Dict[str, str] = {
     "filters_clear": "Clear",
 }
 
+# External translations (non-English)
 TRANSLATIONS_PATH = os.path.join(os.path.dirname(__file__), "translations.json")
 _EXTERNAL_TRANSLATIONS: Dict[str, Dict[str, str]] = {}
 
@@ -89,6 +98,7 @@ def _load_external_translations() -> Dict[str, Dict[str, str]]:
 _EXTERNAL_TRANSLATIONS = _load_external_translations()
 
 def t_for(lang: str) -> Dict[str, str]:
+    """Merge external bundle (if any) over English fallback."""
     lang = (lang or "en").lower()
     if lang == "en":
         return EN_TRANSLATIONS
@@ -101,11 +111,11 @@ def t_for(lang: str) -> Dict[str, str]:
 
 # --- Default settings ---
 DEFAULT_SETTINGS = {
-    "theme": "dark",
-    "fade_start": 1000.0,
-    "currency": "EUR",
-    "timezone": "Europe/Madrid",
-    "language": "en"
+    "theme": "dark",        # "dark" | "light" | "dracula"
+    "fade_start": 1000.0,   # where green starts to fade to red
+    "currency": "EUR",      # "EUR" | "USD" | "GBP"
+    "timezone": "Europe/Madrid",  # IANA tz for display + new log timestamps
+    "language": "en"        # see SUPPORTED_LANGS
 }
 
 app = FastAPI(title=APP_NAME)
@@ -132,8 +142,8 @@ class SettingsEntry(BaseModel):
     theme: Literal["dark","light","dracula"]
     fade_start: float
     currency: Optional[Literal["EUR","USD","GBP"]] = None
-    timezone: Optional[str] = None
-    language: Optional[Literal["en","es","fr"]] = None
+    timezone: Optional[str] = None  # IANA tz
+    language: Optional[Literal["en","es","fr","zh","pt","ja","de","it"]] = None
 
 # --- Helpers ---
 def validate_timezone(tz: Optional[str]) -> str:
@@ -145,9 +155,8 @@ def validate_timezone(tz: Optional[str]) -> str:
         return DEFAULT_SETTINGS["timezone"]
 
 def validate_language(lang: Optional[str]) -> str:
-    if (lang or "").lower() in ("en", "es", "fr"):
-        return (lang or "en").lower()
-    return "en"
+    code = (lang or "").lower()
+    return code if code in SUPPORTED_LANGS else "en"
 
 def now_iso_in_tz(tz_name: str) -> str:
     try:
@@ -311,7 +320,6 @@ async def index(request: Request):
     tz_name = settings["timezone"]
     balance_display = format_currency(balance, currency)
 
-    # Filters from querystring
     qp = request.query_params
     q = (qp.get("q") or "").strip()
     action_filter = (qp.get("action") or "all").lower()
@@ -320,40 +328,29 @@ async def index(request: Request):
     min_str = (qp.get("min") or "").strip()
     max_str = (qp.get("max") or "").strip()
 
-    # Detect if any filter is active to auto-open the collapsible
-    filters_open = any([
-        q,
-        action_filter in ("add", "withdraw"),
-        start_str, end_str, min_str, max_str
-    ])
+    filters_open = any([q, action_filter in ("add", "withdraw"), start_str, end_str, min_str, max_str])
 
-    # Parse dates/amounts
-    start_date = None
-    end_date = None
+    start_date = end_date = None
     try:
-        if start_str:
-            start_date = datetime.date.fromisoformat(start_str)
-        if end_str:
-            end_date = datetime.date.fromisoformat(end_str)
+        if start_str: start_date = datetime.date.fromisoformat(start_str)
+        if end_str:   end_date = datetime.date.fromisoformat(end_str)
     except Exception:
         pass
-    min_amount = None
-    max_amount = None
+
+    min_amount = max_amount = None
     try:
-        if min_str:
-            min_amount = float(min_str)
+        if min_str: min_amount = float(min_str)
     except Exception:
         pass
     try:
-        if max_str:
-            max_amount = float(max_str)
+        if max_str: max_amount = float(max_str)
     except Exception:
         pass
 
     movements_src = [r for r in rows if r.kind == "movement"]
 
     def passes_filters(m: Movement) -> bool:
-        if action_filter in ("add", "withdraw") and (m.action or "") != action_filter:
+        if action_filter in ("add","withdraw") and (m.action or "") != action_filter:
             return False
         m_dt = parse_ts(m.timestamp)
         try:
@@ -361,20 +358,15 @@ async def index(request: Request):
         except Exception:
             pass
         m_d = m_dt.date()
-        if start_date and m_d < start_date:
-            return False
-        if end_date and m_d > end_date:
-            return False
+        if start_date and m_d < start_date: return False
+        if end_date and m_d > end_date: return False
         m_amt = float(m.amount or 0.0)
-        if min_amount is not None and m_amt < min_amount:
-            return False
-        if max_amount is not None and m_amt > max_amount:
-            return False
+        if min_amount is not None and m_amt < min_amount: return False
+        if max_amount is not None and m_amt > max_amount: return False
         if q:
             ql = q.lower()
             hay = f"{m.description or ''} {m.action or ''} {format_display_date(m.timestamp, tz_name)}".lower()
-            if ql not in hay:
-                return False
+            if ql not in hay: return False
         return True
 
     filtered = [m for m in movements_src if passes_filters(m)]
@@ -445,8 +437,7 @@ async def setup_post(
                 "error": t["error_file_required"],
                 "app_name": APP_NAME,
                 "theme": settings["theme"],
-                "t": t,
-                "lang": lang
+                "t": t, "lang": lang
             }, status_code=400)
         content = await ledger_file.read()
         text = content.decode("utf-8", errors="ignore")
@@ -457,8 +448,7 @@ async def setup_post(
                 "error": t["error_file_empty"],
                 "app_name": APP_NAME,
                 "theme": settings["theme"],
-                "t": t,
-                "lang": lang
+                "t": t, "lang": lang
             }, status_code=400)
 
         parsed_any = False
@@ -493,8 +483,7 @@ async def setup_post(
                 "error": t["error_file_invalid"],
                 "app_name": APP_NAME,
                 "theme": settings["theme"],
-                "t": t,
-                "lang": lang
+                "t": t, "lang": lang
             }, status_code=400)
 
         if imported_settings:
@@ -513,8 +502,7 @@ async def setup_post(
                 "error": t["error_initial_balance_required"],
                 "app_name": APP_NAME,
                 "theme": settings["theme"],
-                "t": t,
-                "lang": lang
+                "t": t, "lang": lang
             }, status_code=400)
 
         s = get_settings()
@@ -553,17 +541,14 @@ async def add_movement(
         resulting_balance=new_balance
     )
     append_entry(entry)
-
     return RedirectResponse("/", 303)
 
 @app.get("/export")
 async def export_ledger():
     guard = ensure_setup_page()
     if guard: return guard
-
     s = get_settings()
     append_settings_to_ledger(s)
-
     if not os.path.exists(LEDGER_PATH):
         return PlainTextResponse("No ledger available.", status_code=404)
     filename = f"savion-ledger-{datetime.datetime.utcnow().strftime('%Y%m%dT%H%M%SZ')}.jsonl"
@@ -573,7 +558,6 @@ async def export_ledger():
 async def reset_get(request: Request):
     guard = ensure_setup_page()
     if guard: return guard
-
     a = random.randint(20, 60)
     b = random.randint(5, 15)
     op = random.choice(["+","-"])
@@ -581,12 +565,8 @@ async def reset_get(request: Request):
     lang = settings["language"]
     t = t_for(lang)
     return templates.TemplateResponse("reset.html", {
-        "request": request,
-        "a": a, "b": b, "op": op,
-        "app_name": APP_NAME,
-        "theme": settings["theme"],
-        "t": t,
-        "lang": lang
+        "request": request, "a": a, "b": b, "op": op,
+        "app_name": APP_NAME, "theme": settings["theme"], "t": t, "lang": lang
     })
 
 @app.post("/reset", response_class=HTMLResponse)
@@ -615,8 +595,7 @@ async def reset_post(
             "op": random.choice(["+","-"]),
             "app_name": APP_NAME,
             "theme": settings["theme"],
-            "t": t,
-            "lang": lang
+            "t": t, "lang": lang
         }, status_code=400)
 
     if os.path.exists(LEDGER_PATH):
@@ -659,7 +638,7 @@ async def settings_post(
     fade_start: float = Form(...),
     currency: Literal["EUR","USD","GBP"] = Form(...),
     timezone: str = Form(...),
-    language: Literal["en","es","fr"] = Form(...),
+    language: Literal["en","es","fr","zh","pt","ja","de","it"] = Form(...),
 ):
     try:
         fs = float(fade_start)
@@ -678,7 +657,6 @@ async def settings_post(
     save_settings(s)
     if is_initialized():
         append_settings_to_ledger(s)
-
     return RedirectResponse("/settings", 303)
 
 @app.get("/healthz")
