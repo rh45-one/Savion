@@ -14,7 +14,7 @@ os.makedirs(DATA_DIR, exist_ok=True)
 
 # --- Default settings ---
 DEFAULT_SETTINGS = {
-    "theme": "dark",       # "dark" | "light" | "dracula" | "liquid-glass" | "liquid-glass-light"
+    "theme": "dark",       # "dark" | "light" | "dracula" (applied)
     "fade_start": 1000.0   # balance where green starts to fade toward red
 }
 
@@ -39,7 +39,7 @@ class Movement(BaseModel):
 class SettingsEntry(BaseModel):
     kind: Literal["settings"]
     timestamp: str
-    theme: Literal["dark","light","dracula","liquid-glass","liquid-glass-light"]
+    theme: Literal["dark","light","dracula"]
     fade_start: float
 
 # --- Helpers ---
@@ -59,8 +59,7 @@ def get_settings() -> dict:
         for k, v in DEFAULT_SETTINGS.items():
             data.setdefault(k, v)
         # sanitize
-        allowed = ("dark", "light", "dracula", "liquid-glass", "liquid-glass-light")
-        if data.get("theme") not in allowed:
+        if data.get("theme") not in ("dark", "light", "dracula"):
             data["theme"] = DEFAULT_SETTINGS["theme"]
         try:
             data["fade_start"] = float(data.get("fade_start", DEFAULT_SETTINGS["fade_start"]))
@@ -73,11 +72,13 @@ def get_settings() -> dict:
         return DEFAULT_SETTINGS.copy()
 
 def save_settings(s: dict):
+    # persist to settings.json
     with write_lock:
         with open(SETTINGS_PATH, "w", encoding="utf-8") as f:
             json.dump(s, f)
 
 def append_settings_to_ledger(s: dict):
+    # record a settings snapshot in the ledger for portability on export/import
     entry = SettingsEntry(
         kind="settings",
         timestamp=now_iso(),
@@ -89,6 +90,7 @@ def append_settings_to_ledger(s: dict):
             f.write(json.dumps(entry.dict(), ensure_ascii=False) + "\n")
 
 def read_ledger_entries() -> List[dict]:
+    """Read raw JSON objects (skip blank/malformed)."""
     entries: List[dict] = []
     if not os.path.exists(LEDGER_PATH):
         return entries
@@ -105,6 +107,7 @@ def read_ledger_entries() -> List[dict]:
     return entries
 
 def read_movements() -> List[Movement]:
+    """Only return movement/setup/reset entries (ignore settings lines)."""
     rows: List[Movement] = []
     for obj in read_ledger_entries():
         k = obj.get("kind")
@@ -144,11 +147,12 @@ async def index(request: Request):
     rows = read_movements()
     balance = compute_balance(rows)
 
+    # compute HSL color based on settings.fade_start
     fade_start = float(settings["fade_start"])
     if balance <= 0:
-        hue = 0.0
+        hue = 0.0  # red
     elif balance >= fade_start:
-        hue = 120.0
+        hue = 120.0  # green
     else:
         ratio = max(0.0, min(balance / fade_start, 1.0))
         hue = 120.0 * ratio
@@ -208,6 +212,7 @@ async def setup_post(
                 "theme": s["theme"]
             }, status_code=400)
 
+        # Write file verbatim; also apply any settings lines found
         parsed_any = False
         imported_settings = None
         with write_lock:
@@ -217,12 +222,14 @@ async def setup_post(
                         obj = json.loads(ln)
                         k = obj.get("kind")
                         if k == "settings":
+                            # apply to settings.json as well
                             try:
                                 se = SettingsEntry(**obj)
                                 imported_settings = {"theme": se.theme, "fade_start": float(se.fade_start)}
                             except Exception:
                                 pass
                         else:
+                            # validate movement-like lines
                             Movement(**obj)
                         f.write(json.dumps(obj, ensure_ascii=False) + "\n")
                         parsed_any = True
@@ -237,6 +244,7 @@ async def setup_post(
                 "theme": s["theme"]
             }, status_code=400)
 
+        # If import carried settings, persist them
         if imported_settings:
             s = get_settings()
             s.update(imported_settings)
@@ -295,6 +303,7 @@ async def export_ledger():
     guard = ensure_setup_page()
     if guard: return guard
 
+    # Ensure latest settings snapshot is recorded in ledger before export
     s = get_settings()
     append_settings_to_ledger(s)
 
@@ -344,6 +353,7 @@ async def reset_post(
             "theme": s["theme"]
         }, status_code=400)
 
+    # Log reset and wipe ledger
     if os.path.exists(LEDGER_PATH):
         try:
             rows = read_movements()
@@ -358,7 +368,9 @@ async def reset_post(
             except FileNotFoundError:
                 pass
 
+    # Reset settings to defaults
     save_settings(DEFAULT_SETTINGS.copy())
+
     return RedirectResponse("/setup", 303)
 
 # --- Settings page ---
@@ -375,9 +387,10 @@ async def settings_get(request: Request):
 @app.post("/settings", response_class=HTMLResponse)
 async def settings_post(
     request: Request,
-    theme: Literal["dark","light","dracula","liquid-glass","liquid-glass-light"] = Form(...),
+    theme: Literal["dark","light","dracula"] = Form(...),
     fade_start: float = Form(...),
 ):
+    # sanitize fade_start
     try:
         fs = float(fade_start)
     except Exception:
@@ -389,6 +402,7 @@ async def settings_post(
     s["theme"] = theme
     s["fade_start"] = fs
 
+    # persist to file AND record a snapshot in ledger for portability
     save_settings(s)
     if is_initialized():
         append_settings_to_ledger(s)

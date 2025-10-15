@@ -2,6 +2,7 @@
 
 What
 - Minimal personal ledger web app (FastAPI + Jinja2). Record movements, export/import JSONL ledger, reset safely.
+ - **Live demo** (non-persistent): https://savion.onrender.com — usually starts in ~5 seconds (may take up to 1 minute).
 
 Run (Docker)
 ```powershell
@@ -48,4 +49,5 @@ Developer notes
 - Add `requirements.txt` and tests if you plan ongoing development.
 
 License
-- No license file included. Add `LICENSE` if you want to publish or redistribute.
+- MIT License
+- This project is available under the MIT License. See the `LICENSE` file for the full text.
