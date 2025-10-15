@@ -3,7 +3,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse, PlainTextResponse,
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
-from typing import Optional, List, Literal
+from typing import Optional, List, Literal, Dict, Any
 from zoneinfo import ZoneInfo
 import os, json, datetime, threading, random
 
@@ -13,171 +13,98 @@ LEDGER_PATH = os.path.join(DATA_DIR, "ledger.jsonl")
 SETTINGS_PATH = os.path.join(DATA_DIR, "settings.json")
 os.makedirs(DATA_DIR, exist_ok=True)
 
-# --- Translations ---
-TRANSLATIONS = {
-    "en": {
-        "nav_home": "Home",
-        "nav_export": "Export",
-        "nav_settings": "Settings",
-        "nav_reset": "Reset",
-        "balance_current": "Current Balance",
-        "section_add_withdraw": "Add / Withdraw",
-        "form_action": "Action",
-        "action_add": "Add",
-        "action_withdraw": "Withdraw",
-        "form_amount": "Amount",
-        "form_description_optional": "Description (optional)",
-        "form_submit": "Submit",
-        "section_recent": "Recent Movements",
-        "table_date": "Date",
-        "table_action": "Action",
-        "table_amount": "Amount",
-        "table_balance": "Balance",
-        "table_description": "Description",
-        "table_empty": "No movements yet.",
-        "settings_title": "Settings",
-        "settings_theme": "Theme",
-        "settings_fade_start": "Fade start (balance where green begins to fade)",
-        "settings_currency": "Display currency",
-        "currency_eur": "€ Euro",
-        "currency_usd": "$ US Dollar",
-        "currency_gbp": "£ British Pound",
-        "settings_timezone": "Timezone (IANA, e.g., Europe/Madrid)",
-        "settings_language": "Language",
-        "language_en": "English (EN)",
-        "language_es": "Español (ES)",
-        "language_fr": "Français (FR)",
-        "settings_save": "Save",
-        "tz_preview_prefix": "Current time in",
-        # Errors
-        "error_file_required": "Please choose a ledger file to import.",
-        "error_file_empty": "Uploaded file is empty.",
-        "error_file_invalid": "File format invalid. Expecting JSON Lines exported by Savion.",
-        "error_initial_balance_required": "Please enter an initial balance or choose Import.",
-        "error_reset_verification": "Verification failed. Type RESET and solve the math correctly.",
-        # Filters
-        "filters_title": "Filters",
-        "filters_search": "Search",
-        "filters_action": "Action",
-        "filters_action_all": "All",
-        "filters_action_add": "Add only",
-        "filters_action_withdraw": "Withdraw only",
-        "filters_date_from": "From date",
-        "filters_date_to": "To date",
-        "filters_amount_min": "Min amount",
-        "filters_amount_max": "Max amount",
-        "filters_apply": "Apply",
-        "filters_clear": "Clear",
-    },
-    "es": {
-        "nav_home": "Inicio",
-        "nav_export": "Exportar",
-        "nav_settings": "Ajustes",
-        "nav_reset": "Restablecer",
-        "balance_current": "Saldo actual",
-        "section_add_withdraw": "Añadir / Retirar",
-        "form_action": "Acción",
-        "action_add": "Añadir",
-        "action_withdraw": "Retirar",
-        "form_amount": "Cantidad",
-        "form_description_optional": "Descripción (opcional)",
-        "form_submit": "Guardar",
-        "section_recent": "Movimientos recientes",
-        "table_date": "Fecha",
-        "table_action": "Acción",
-        "table_amount": "Cantidad",
-        "table_balance": "Saldo",
-        "table_description": "Descripción",
-        "table_empty": "Aún no hay movimientos.",
-        "settings_title": "Ajustes",
-        "settings_theme": "Tema",
-        "settings_fade_start": "Inicio del desvanecimiento (saldo)",
-        "settings_currency": "Moneda de visualización",
-        "currency_eur": "€ Euro",
-        "currency_usd": "$ Dólar estadounidense",
-        "currency_gbp": "£ Libra esterlina",
-        "settings_timezone": "Zona horaria (IANA, p. ej., Europe/Madrid)",
-        "settings_language": "Idioma",
-        "language_en": "English (EN)",
-        "language_es": "Español (ES)",
-        "language_fr": "Français (FR)",
-        "settings_save": "Guardar",
-        "tz_preview_prefix": "Hora actual en",
-        # Errors
-        "error_file_required": "Selecciona un archivo de libro mayor para importar.",
-        "error_file_empty": "El archivo subido está vacío.",
-        "error_file_invalid": "Formato de archivo no válido. Se espera JSON Lines exportado por Savion.",
-        "error_initial_balance_required": "Introduce un saldo inicial o elige Importar.",
-        "error_reset_verification": "Verificación fallida. Escribe RESET y resuelve la operación correctamente.",
-        # Filters
-        "filters_title": "Filtros",
-        "filters_search": "Buscar",
-        "filters_action": "Acción",
-        "filters_action_all": "Todas",
-        "filters_action_add": "Solo añadir",
-        "filters_action_withdraw": "Solo retirar",
-        "filters_date_from": "Desde fecha",
-        "filters_date_to": "Hasta fecha",
-        "filters_amount_min": "Cantidad mínima",
-        "filters_amount_max": "Cantidad máxima",
-        "filters_apply": "Aplicar",
-        "filters_clear": "Limpiar",
-    },
-    "fr": {
-        "nav_home": "Accueil",
-        "nav_export": "Exporter",
-        "nav_settings": "Réglages",
-        "nav_reset": "Réinitialiser",
-        "balance_current": "Solde actuel",
-        "section_add_withdraw": "Ajouter / Retirer",
-        "form_action": "Action",
-        "action_add": "Ajouter",
-        "action_withdraw": "Retirer",
-        "form_amount": "Montant",
-        "form_description_optional": "Description (optionnel)",
-        "form_submit": "Valider",
-        "section_recent": "Mouvements récents",
-        "table_date": "Date",
-        "table_action": "Action",
-        "table_amount": "Montant",
-        "table_balance": "Solde",
-        "table_description": "Description",
-        "table_empty": "Aucun mouvement pour le moment.",
-        "settings_title": "Réglages",
-        "settings_theme": "Thème",
-        "settings_fade_start": "Début de l’estompage (solde)",
-        "settings_currency": "Devise d’affichage",
-        "currency_eur": "€ Euro",
-        "currency_usd": "$ Dollar américain",
-        "currency_gbp": "£ Livre sterling",
-        "settings_timezone": "Fuseau horaire (IANA, ex. Europe/Madrid)",
-        "settings_language": "Langue",
-        "language_en": "English (EN)",
-        "language_es": "Español (ES)",
-        "language_fr": "Français (FR)",
-        "settings_save": "Enregistrer",
-        "tz_preview_prefix": "Heure actuelle pour",
-        # Errors
-        "error_file_required": "Choisissez un fichier de grand livre à importer.",
-        "error_file_empty": "Le fichier téléversé est vide.",
-        "error_file_invalid": "Format de fichier invalide. Attendu : JSON Lines exporté par Savion.",
-        "error_initial_balance_required": "Saisissez un solde initial ou choisissez Importer.",
-        "error_reset_verification": "Échec de la vérification. Tapez RESET et résolvez correctement l’opération.",
-        # Filters
-        "filters_title": "Filtres",
-        "filters_search": "Rechercher",
-        "filters_action": "Action",
-        "filters_action_all": "Toutes",
-        "filters_action_add": "Ajouter uniquement",
-        "filters_action_withdraw": "Retirer uniquement",
-        "filters_date_from": "Du",
-        "filters_date_to": "Au",
-        "filters_amount_min": "Montant min.",
-        "filters_amount_max": "Montant max.",
-        "filters_apply": "Appliquer",
-        "filters_clear": "Réinitialiser",
-    },
+# --- Embedded English translations (fallback) ---
+EN_TRANSLATIONS: Dict[str, str] = {
+    "nav_home": "Home",
+    "nav_export": "Export",
+    "nav_settings": "Settings",
+    "nav_reset": "Reset",
+    "balance_current": "Current Balance",
+    "section_add_withdraw": "Add / Withdraw",
+    "form_action": "Action",
+    "action_add": "Add",
+    "action_withdraw": "Withdraw",
+    "form_amount": "Amount",
+    "form_description_optional": "Description (optional)",
+    "form_submit": "Submit",
+    "section_recent": "Recent Movements",
+    "table_date": "Date",
+    "table_action": "Action",
+    "table_amount": "Amount",
+    "table_balance": "Balance",
+    "table_description": "Description",
+    "table_empty": "No movements yet.",
+    "settings_title": "Settings",
+    "settings_theme": "Theme",
+    "settings_fade_start": "Fade start (balance where green begins to fade)",
+    "settings_currency": "Display currency",
+    "currency_eur": "€ Euro",
+    "currency_usd": "$ US Dollar",
+    "currency_gbp": "£ British Pound",
+    "settings_timezone": "Timezone (IANA, e.g., Europe/Madrid)",
+    "settings_language": "Language",
+    "language_en": "English (EN)",
+    "language_es": "Español (ES)",
+    "language_fr": "Français (FR)",
+    "settings_save": "Save",
+    "tz_preview_prefix": "Current time in",
+    # Errors
+    "error_file_required": "Please choose a ledger file to import.",
+    "error_file_empty": "Uploaded file is empty.",
+    "error_file_invalid": "File format invalid. Expecting JSON Lines exported by Savion.",
+    "error_initial_balance_required": "Please enter an initial balance or choose Import.",
+    "error_reset_verification": "Verification failed. Type RESET and solve the math correctly.",
+    # Filters
+    "filters_title": "Filters",
+    "filters_search": "Search",
+    "filters_action": "Action",
+    "filters_action_all": "All",
+    "filters_action_add": "Add only",
+    "filters_action_withdraw": "Withdraw only",
+    "filters_date_from": "From date",
+    "filters_date_to": "To date",
+    "filters_amount_min": "Min amount",
+    "filters_amount_max": "Max amount",
+    "filters_apply": "Apply",
+    "filters_clear": "Clear",
 }
+
+# External (non-English) translations live here (optional file).
+TRANSLATIONS_PATH = os.path.join(os.path.dirname(__file__), "translations.json")
+_EXTERNAL_TRANSLATIONS: Dict[str, Dict[str, str]] = {}
+
+def _load_external_translations() -> Dict[str, Dict[str, str]]:
+    try:
+        with open(TRANSLATIONS_PATH, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        if isinstance(data, dict):
+            # Ensure values are dicts of strings
+            out: Dict[str, Dict[str, str]] = {}
+            for lang, bundle in data.items():
+                if isinstance(bundle, dict):
+                    out[lang] = {str(k): str(v) for k, v in bundle.items()}
+            return out
+    except Exception:
+        pass
+    return {}
+
+# Load once at startup
+_EXTERNAL_TRANSLATIONS = _load_external_translations()
+
+def t_for(lang: str) -> Dict[str, str]:
+    """
+    Return translations for `lang`, merging external bundle over English fallback.
+    If not found, return English.
+    """
+    lang = (lang or "en").lower()
+    if lang == "en":
+        return EN_TRANSLATIONS
+    bundle = _EXTERNAL_TRANSLATIONS.get(lang)
+    if not bundle:
+        return EN_TRANSLATIONS
+    merged = EN_TRANSLATIONS.copy()
+    merged.update(bundle)
+    return merged
 
 # --- Default settings ---
 DEFAULT_SETTINGS = {
@@ -216,9 +143,6 @@ class SettingsEntry(BaseModel):
     language: Optional[Literal["en","es","fr"]] = None
 
 # --- Helpers ---
-def t_for(lang: str) -> dict:
-    return TRANSLATIONS.get(lang, TRANSLATIONS["en"])
-
 def validate_timezone(tz: Optional[str]) -> str:
     name = (tz or "").strip() or DEFAULT_SETTINGS["timezone"]
     try:
@@ -228,7 +152,7 @@ def validate_timezone(tz: Optional[str]) -> str:
         return DEFAULT_SETTINGS["timezone"]
 
 def validate_language(lang: Optional[str]) -> str:
-    if (lang or "").lower() in ("en","es","fr"):
+    if (lang or "").lower() in ("en", "es", "fr"):
         return (lang or "en").lower()
     return "en"
 
@@ -406,12 +330,12 @@ async def index(request: Request):
     qp = request.query_params
     q = (qp.get("q") or "").strip()
     action_filter = (qp.get("action") or "all").lower()
-    start_str = (qp.get("start") or "").strip()  # yyyy-mm-dd from <input type="date">
+    start_str = (qp.get("start") or "").strip()  # yyyy-mm-dd
     end_str = (qp.get("end") or "").strip()
     min_str = (qp.get("min") or "").strip()
     max_str = (qp.get("max") or "").strip()
 
-    # Parse date bounds
+    # Parse dates/amounts
     start_date = None
     end_date = None
     try:
@@ -420,32 +344,25 @@ async def index(request: Request):
         if end_str:
             end_date = datetime.date.fromisoformat(end_str)
     except Exception:
-        start_date = start_date or None
-        end_date = end_date or None
-
-    # Parse amount bounds
+        pass
     min_amount = None
     max_amount = None
     try:
         if min_str:
             min_amount = float(min_str)
     except Exception:
-        min_amount = None
+        pass
     try:
         if max_str:
             max_amount = float(max_str)
     except Exception:
-        max_amount = None
+        pass
 
-    # Prepare and filter movements
     movements_src = [r for r in rows if r.kind == "movement"]
 
     def passes_filters(m: Movement) -> bool:
-        # action
         if action_filter in ("add", "withdraw") and (m.action or "") != action_filter:
             return False
-
-        # date range: convert timestamp to selected tz and compare date() inclusive
         m_dt = parse_ts(m.timestamp)
         try:
             m_dt = m_dt.astimezone(ZoneInfo(tz_name))
@@ -456,15 +373,11 @@ async def index(request: Request):
             return False
         if end_date and m_d > end_date:
             return False
-
-        # amount range uses the 'amount' field (positive)
         m_amt = float(m.amount or 0.0)
         if min_amount is not None and m_amt < min_amount:
             return False
         if max_amount is not None and m_amt > max_amount:
             return False
-
-        # search: in description, action, or formatted display date
         if q:
             ql = q.lower()
             hay = f"{m.description or ''} {m.action or ''} {format_display_date(m.timestamp, tz_name)}".lower()
@@ -473,10 +386,8 @@ async def index(request: Request):
         return True
 
     filtered = [m for m in movements_src if passes_filters(m)]
-    # sort by parsed datetime desc
     filtered.sort(key=lambda r: parse_ts(r.timestamp), reverse=True)
 
-    # Build view models with currency formatting
     movements = []
     for r in filtered[:200]:
         action_label = t["action_add"] if r.action == "add" else t["action_withdraw"]
@@ -497,7 +408,6 @@ async def index(request: Request):
         "theme": settings["theme"],
         "t": t,
         "lang": lang,
-        # pass back filter values for sticky form inputs
         "q": q,
         "action_filter": action_filter,
         "start_str": start_str,
@@ -559,7 +469,7 @@ async def setup_post(
             }, status_code=400)
 
         parsed_any = False
-        imported_settings = None
+        imported_settings: Optional[Dict[str, Any]] = None
         with write_lock:
             with open(LEDGER_PATH, "w", encoding="utf-8") as f:
                 for ln in lines:
@@ -732,7 +642,7 @@ async def reset_post(
             except FileNotFoundError:
                 pass
 
-    # Reset settings to defaults
+    # Reset settings to defaults (language -> EN)
     save_settings(DEFAULT_SETTINGS.copy())
 
     return RedirectResponse("/setup", 303)
