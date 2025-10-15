@@ -15,6 +15,14 @@
     <input type="number" name="fade_start" step="1" min="1" value="{{ settings.fade_start|default(1000) }}" required>
   </label>
 
+  <label>Display currency
+    <select name="currency" required>
+      <option value="EUR" {% if settings.currency == 'EUR' %}selected{% endif %}>€ Euro</option>
+      <option value="USD" {% if settings.currency == 'USD' %}selected{% endif %}>$ US Dollar</option>
+      <option value="GBP" {% if settings.currency == 'GBP' %}selected{% endif %}>£ British Pound</option>
+    </select>
+  </label>
+
   <button type="submit">Save</button>
 </form>
 {% endblock %}

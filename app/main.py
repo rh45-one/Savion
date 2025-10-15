@@ -14,8 +14,9 @@ os.makedirs(DATA_DIR, exist_ok=True)
 
 # --- Default settings ---
 DEFAULT_SETTINGS = {
-    "theme": "dark",       # "dark" | "light" | "dracula" (applied)
-    "fade_start": 1000.0   # balance where green starts to fade toward red
+    "theme": "dark",       # "dark" | "light" | "dracula"
+    "fade_start": 1000.0,  # where green starts to fade to red
+    "currency": "EUR"      # "EUR" | "USD" | "GBP" (display only)
 }
 
 app = FastAPI(title=APP_NAME)
@@ -41,6 +42,7 @@ class SettingsEntry(BaseModel):
     timestamp: str
     theme: Literal["dark","light","dracula"]
     fade_start: float
+    currency: Optional[Literal["EUR","USD","GBP"]] = None  # optional for backward compatibility
 
 # --- Helpers ---
 def now_iso():
@@ -56,10 +58,11 @@ def get_settings() -> dict:
     try:
         with open(SETTINGS_PATH, "r", encoding="utf-8") as f:
             data = json.load(f)
+        # ensure defaults exist
         for k, v in DEFAULT_SETTINGS.items():
             data.setdefault(k, v)
         # sanitize
-        if data.get("theme") not in ("dark", "light", "dracula"):
+        if data.get("theme") not in ("dark","light","dracula"):
             data["theme"] = DEFAULT_SETTINGS["theme"]
         try:
             data["fade_start"] = float(data.get("fade_start", DEFAULT_SETTINGS["fade_start"]))
@@ -67,30 +70,30 @@ def get_settings() -> dict:
             data["fade_start"] = DEFAULT_SETTINGS["fade_start"]
         if data["fade_start"] <= 0:
             data["fade_start"] = 1.0
+        if data.get("currency") not in ("EUR","USD","GBP"):
+            data["currency"] = DEFAULT_SETTINGS["currency"]
         return data
     except Exception:
         return DEFAULT_SETTINGS.copy()
 
 def save_settings(s: dict):
-    # persist to settings.json
     with write_lock:
         with open(SETTINGS_PATH, "w", encoding="utf-8") as f:
             json.dump(s, f)
 
 def append_settings_to_ledger(s: dict):
-    # record a settings snapshot in the ledger for portability on export/import
     entry = SettingsEntry(
         kind="settings",
         timestamp=now_iso(),
         theme=s.get("theme", DEFAULT_SETTINGS["theme"]),
-        fade_start=float(s.get("fade_start", DEFAULT_SETTINGS["fade_start"]))
+        fade_start=float(s.get("fade_start", DEFAULT_SETTINGS["fade_start"])),
+        currency=s.get("currency", DEFAULT_SETTINGS["currency"])
     )
     with write_lock:
         with open(LEDGER_PATH, "a", encoding="utf-8") as f:
             f.write(json.dumps(entry.dict(), ensure_ascii=False) + "\n")
 
 def read_ledger_entries() -> List[dict]:
-    """Read raw JSON objects (skip blank/malformed)."""
     entries: List[dict] = []
     if not os.path.exists(LEDGER_PATH):
         return entries
@@ -107,7 +110,6 @@ def read_ledger_entries() -> List[dict]:
     return entries
 
 def read_movements() -> List[Movement]:
-    """Only return movement/setup/reset entries (ignore settings lines)."""
     rows: List[Movement] = []
     for obj in read_ledger_entries():
         k = obj.get("kind")
@@ -137,6 +139,21 @@ def ensure_setup_page():
         return RedirectResponse(url="/setup", status_code=303)
     return None
 
+# Currency formatting
+def format_currency(value: float, currency: str) -> str:
+    """
+    $ and £ before the number; € after the number.
+    Keep minus sign before the symbol/number for clarity.
+    """
+    sign = "-" if value < 0 else ""
+    amt = f"{abs(value):.2f}"
+    if currency == "USD":
+        return f"{sign}${amt}"
+    if currency == "GBP":
+        return f"{sign}£{amt}"
+    # EUR default
+    return f"{sign}{amt} €"
+
 # --- Routes ---
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
@@ -147,7 +164,7 @@ async def index(request: Request):
     rows = read_movements()
     balance = compute_balance(rows)
 
-    # compute HSL color based on settings.fade_start
+    # color fade using settings.fade_start
     fade_start = float(settings["fade_start"])
     if balance <= 0:
         hue = 0.0  # red
@@ -158,14 +175,28 @@ async def index(request: Request):
         hue = 120.0 * ratio
     balance_color = f"hsl({hue:.0f}, 70%, 60%)"
 
-    movements = [r for r in rows if r.kind == "movement"]
-    movements.sort(key=lambda r: r.timestamp, reverse=True)
+    # Build view models with currency formatting
+    currency = settings["currency"]
+    balance_display = format_currency(balance, currency)
+
+    movements_src = [r for r in rows if r.kind == "movement"]
+    movements_src.sort(key=lambda r: r.timestamp, reverse=True)
+
+    movements = []
+    for r in movements_src[:200]:
+        movements.append({
+            "timestamp": r.timestamp,
+            "action": r.action,
+            "amount_display": format_currency(float(r.amount or 0.0), currency),  # show positive amount; sign implied by action
+            "balance_display": format_currency(float(r.resulting_balance or 0.0), currency),
+            "description": r.description or ""
+        })
 
     return templates.TemplateResponse("index.html", {
         "request": request,
-        "balance": f"{balance:.2f}",
+        "balance_display": balance_display,
         "balance_color": balance_color,
-        "movements": movements[:200],
+        "movements": movements,
         "app_name": APP_NAME,
         "theme": settings["theme"]
     })
@@ -212,7 +243,6 @@ async def setup_post(
                 "theme": s["theme"]
             }, status_code=400)
 
-        # Write file verbatim; also apply any settings lines found
         parsed_any = False
         imported_settings = None
         with write_lock:
@@ -222,14 +252,16 @@ async def setup_post(
                         obj = json.loads(ln)
                         k = obj.get("kind")
                         if k == "settings":
-                            # apply to settings.json as well
                             try:
                                 se = SettingsEntry(**obj)
-                                imported_settings = {"theme": se.theme, "fade_start": float(se.fade_start)}
+                                imported_settings = {
+                                    "theme": se.theme,
+                                    "fade_start": float(se.fade_start),
+                                    "currency": se.currency or DEFAULT_SETTINGS["currency"]
+                                }
                             except Exception:
                                 pass
                         else:
-                            # validate movement-like lines
                             Movement(**obj)
                         f.write(json.dumps(obj, ensure_ascii=False) + "\n")
                         parsed_any = True
@@ -244,10 +276,12 @@ async def setup_post(
                 "theme": s["theme"]
             }, status_code=400)
 
-        # If import carried settings, persist them
         if imported_settings:
             s = get_settings()
             s.update(imported_settings)
+            # sanitize after update
+            if s.get("currency") not in ("EUR","USD","GBP"):
+                s["currency"] = DEFAULT_SETTINGS["currency"]
             save_settings(s)
 
         return RedirectResponse("/", 303)
@@ -303,7 +337,7 @@ async def export_ledger():
     guard = ensure_setup_page()
     if guard: return guard
 
-    # Ensure latest settings snapshot is recorded in ledger before export
+    # Ensure latest settings snapshot (now includes currency)
     s = get_settings()
     append_settings_to_ledger(s)
 
@@ -368,7 +402,7 @@ async def reset_post(
             except FileNotFoundError:
                 pass
 
-    # Reset settings to defaults
+    # Reset settings to defaults (including currency)
     save_settings(DEFAULT_SETTINGS.copy())
 
     return RedirectResponse("/setup", 303)
@@ -389,6 +423,7 @@ async def settings_post(
     request: Request,
     theme: Literal["dark","light","dracula"] = Form(...),
     fade_start: float = Form(...),
+    currency: Literal["EUR","USD","GBP"] = Form(...),
 ):
     # sanitize fade_start
     try:
@@ -401,8 +436,9 @@ async def settings_post(
     s = get_settings()
     s["theme"] = theme
     s["fade_start"] = fs
+    s["currency"] = currency
 
-    # persist to file AND record a snapshot in ledger for portability
+    # persist & snapshot
     save_settings(s)
     if is_initialized():
         append_settings_to_ledger(s)

@@ -1,14 +1,14 @@
 {% extends "base.html" %}
 {% block content %}
-<section class="balance">
-  <h2>Current Balance</h2>
-  <!-- Inline style receives the computed color from the server -->
-  <div class="balance-amount" style="color: {{ balance_color }};">{{ balance }}</div>
+
+<section class="balance card">
+  <div>Current Balance</div>
+  <div class="balance-amount" style="color: {{ balance_color }}">{{ balance_display }}</div>
 </section>
 
-<section class="new-movement">
-  <h2>New Movement</h2>
-  <form action="/movement" method="post" class="card form-grid">
+<section class="card">
+  <h3 style="margin-top:0">Add / Withdraw</h3>
+  <form action="/movement" method="post" class="form-grid">
     <label>Action
       <select name="action" required>
         <option value="add">Add</option>
@@ -16,37 +16,41 @@
       </select>
     </label>
     <label>Amount
-      <input type="number" name="amount" step="0.01" min="0" inputmode="decimal" required>
+      <input type="number" name="amount" step="0.01" min="0" required>
     </label>
-    <label>Description (optional)
-      <input type="text" name="description" maxlength="500" placeholder="E.g., Groceries, Salary...">
+    <label style="grid-column: 1 / -1;">Description (optional)
+      <input type="text" name="description" placeholder="Note for this movement">
     </label>
-    <button type="submit">Save Movement</button>
+    <button type="submit">Submit</button>
   </form>
 </section>
 
-<section class="movements">
-  <h2>Recent Movements</h2>
+<section class="card">
+  <h3 style="margin-top:0">Recent Movements</h3>
 
   <div class="table">
-    <div class="row header" role="row">
+    <div class="row header">
       <div class="cell">Date</div>
       <div class="cell">Action</div>
       <div class="cell">Amount</div>
       <div class="cell">Balance</div>
       <div class="cell">Description</div>
     </div>
-    {% for m in movements %}
-      <div class="row" role="row">
-        <div class="cell" data-label="Date">{{ m.timestamp }}</div>
-        <div class="cell" data-label="Action">{{ m.action }}</div>
-        <div class="cell" data-label="Amount">{{ "%.2f"|format(m.amount or 0) }}</div>
-        <div class="cell" data-label="Balance">{{ "%.2f"|format(m.resulting_balance or 0) }}</div>
-        <div class="cell" data-label="Description">{{ m.description }}</div>
+
+    {% for r in movements %}
+      <div class="row">
+        <div class="cell" data-label="Date">{{ r.timestamp }}</div>
+        <div class="cell" data-label="Action">{{ r.action }}</div>
+        <div class="cell" data-label="Amount">{{ r.amount_display }}</div>
+        <div class="cell" data-label="Balance">{{ r.balance_display }}</div>
+        <div class="cell" data-label="Description">{{ r.description }}</div>
       </div>
     {% else %}
-      <div class="row"><div class="cell">No movements yet.</div></div>
+      <div class="row">
+        <div class="cell">No movements yet.</div>
+      </div>
     {% endfor %}
   </div>
 </section>
+
 {% endblock %}
