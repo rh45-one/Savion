@@ -13,12 +13,140 @@ LEDGER_PATH = os.path.join(DATA_DIR, "ledger.jsonl")
 SETTINGS_PATH = os.path.join(DATA_DIR, "settings.json")
 os.makedirs(DATA_DIR, exist_ok=True)
 
+# --- Translations ---
+TRANSLATIONS = {
+    "en": {
+        "nav_home": "Home",
+        "nav_export": "Export",
+        "nav_settings": "Settings",
+        "nav_reset": "Reset",
+        "balance_current": "Current Balance",
+        "section_add_withdraw": "Add / Withdraw",
+        "form_action": "Action",
+        "action_add": "Add",
+        "action_withdraw": "Withdraw",
+        "form_amount": "Amount",
+        "form_description_optional": "Description (optional)",
+        "form_submit": "Submit",
+        "section_recent": "Recent Movements",
+        "table_date": "Date",
+        "table_action": "Action",
+        "table_amount": "Amount",
+        "table_balance": "Balance",
+        "table_description": "Description",
+        "table_empty": "No movements yet.",
+        "settings_title": "Settings",
+        "settings_theme": "Theme",
+        "settings_fade_start": "Fade start (balance where green begins to fade)",
+        "settings_currency": "Display currency",
+        "currency_eur": "€ Euro",
+        "currency_usd": "$ US Dollar",
+        "currency_gbp": "£ British Pound",
+        "settings_timezone": "Timezone (IANA, e.g., Europe/Madrid)",
+        "settings_language": "Language",
+        "language_en": "English (EN)",
+        "language_es": "Español (ES)",
+        "language_fr": "Français (FR)",
+        "settings_save": "Save",
+        "tz_preview_prefix": "Current time in",
+        # Errors
+        "error_file_required": "Please choose a ledger file to import.",
+        "error_file_empty": "Uploaded file is empty.",
+        "error_file_invalid": "File format invalid. Expecting JSON Lines exported by Savion.",
+        "error_initial_balance_required": "Please enter an initial balance or choose Import.",
+        "error_reset_verification": "Verification failed. Type RESET and solve the math correctly.",
+    },
+    "es": {
+        "nav_home": "Inicio",
+        "nav_export": "Exportar",
+        "nav_settings": "Ajustes",
+        "nav_reset": "Restablecer",
+        "balance_current": "Saldo actual",
+        "section_add_withdraw": "Añadir / Retirar",
+        "form_action": "Acción",
+        "action_add": "Añadir",
+        "action_withdraw": "Retirar",
+        "form_amount": "Cantidad",
+        "form_description_optional": "Descripción (opcional)",
+        "form_submit": "Guardar",
+        "section_recent": "Movimientos recientes",
+        "table_date": "Fecha",
+        "table_action": "Acción",
+        "table_amount": "Cantidad",
+        "table_balance": "Saldo",
+        "table_description": "Descripción",
+        "table_empty": "Aún no hay movimientos.",
+        "settings_title": "Ajustes",
+        "settings_theme": "Tema",
+        "settings_fade_start": "Inicio del desvanecimiento (saldo)",
+        "settings_currency": "Moneda de visualización",
+        "currency_eur": "€ Euro",
+        "currency_usd": "$ Dólar estadounidense",
+        "currency_gbp": "£ Libra esterlina",
+        "settings_timezone": "Zona horaria (IANA, p. ej., Europe/Madrid)",
+        "settings_language": "Idioma",
+        "language_en": "English (EN)",
+        "language_es": "Español (ES)",
+        "language_fr": "Français (FR)",
+        "settings_save": "Guardar",
+        "tz_preview_prefix": "Hora actual en",
+        # Errors
+        "error_file_required": "Selecciona un archivo de libro mayor para importar.",
+        "error_file_empty": "El archivo subido está vacío.",
+        "error_file_invalid": "Formato de archivo no válido. Se espera JSON Lines exportado por Savion.",
+        "error_initial_balance_required": "Introduce un saldo inicial o elige Importar.",
+        "error_reset_verification": "Verificación fallida. Escribe RESET y resuelve la operación correctamente.",
+    },
+    "fr": {
+        "nav_home": "Accueil",
+        "nav_export": "Exporter",
+        "nav_settings": "Réglages",
+        "nav_reset": "Réinitialiser",
+        "balance_current": "Solde actuel",
+        "section_add_withdraw": "Ajouter / Retirer",
+        "form_action": "Action",
+        "action_add": "Ajouter",
+        "action_withdraw": "Retirer",
+        "form_amount": "Montant",
+        "form_description_optional": "Description (optionnel)",
+        "form_submit": "Valider",
+        "section_recent": "Mouvements récents",
+        "table_date": "Date",
+        "table_action": "Action",
+        "table_amount": "Montant",
+        "table_balance": "Solde",
+        "table_description": "Description",
+        "table_empty": "Aucun mouvement pour le moment.",
+        "settings_title": "Réglages",
+        "settings_theme": "Thème",
+        "settings_fade_start": "Début de l’estompage (solde)",
+        "settings_currency": "Devise d’affichage",
+        "currency_eur": "€ Euro",
+        "currency_usd": "$ Dollar américain",
+        "currency_gbp": "£ Livre sterling",
+        "settings_timezone": "Fuseau horaire (IANA, ex. Europe/Madrid)",
+        "settings_language": "Langue",
+        "language_en": "English (EN)",
+        "language_es": "Español (ES)",
+        "language_fr": "Français (FR)",
+        "settings_save": "Enregistrer",
+        "tz_preview_prefix": "Heure actuelle pour",
+        # Errors
+        "error_file_required": "Choisissez un fichier de grand livre à importer.",
+        "error_file_empty": "Le fichier téléversé est vide.",
+        "error_file_invalid": "Format de fichier invalide. Attendu : JSON Lines exporté par Savion.",
+        "error_initial_balance_required": "Saisissez un solde initial ou choisissez Importer.",
+        "error_reset_verification": "Échec de la vérification. Tapez RESET et résolvez correctement l’opération.",
+    },
+}
+
 # --- Default settings ---
 DEFAULT_SETTINGS = {
     "theme": "dark",        # "dark" | "light" | "dracula"
     "fade_start": 1000.0,   # where green starts to fade to red
     "currency": "EUR",      # "EUR" | "USD" | "GBP"
-    "timezone": "Europe/Madrid"  # IANA tz for display + new log timestamps
+    "timezone": "Europe/Madrid",  # IANA tz for display + new log timestamps
+    "language": "en"        # "en" | "es" | "fr"
 }
 
 app = FastAPI(title=APP_NAME)
@@ -46,8 +174,12 @@ class SettingsEntry(BaseModel):
     fade_start: float
     currency: Optional[Literal["EUR","USD","GBP"]] = None
     timezone: Optional[str] = None  # IANA tz
+    language: Optional[Literal["en","es","fr"]] = None
 
 # --- Helpers ---
+def t_for(lang: str) -> dict:
+    return TRANSLATIONS.get(lang, TRANSLATIONS["en"])
+
 def validate_timezone(tz: Optional[str]) -> str:
     name = (tz or "").strip() or DEFAULT_SETTINGS["timezone"]
     try:
@@ -55,6 +187,11 @@ def validate_timezone(tz: Optional[str]) -> str:
         return name
     except Exception:
         return DEFAULT_SETTINGS["timezone"]
+
+def validate_language(lang: Optional[str]) -> str:
+    if (lang or "").lower() in ("en","es","fr"):
+        return (lang or "en").lower()
+    return "en"
 
 def now_iso_in_tz(tz_name: str) -> str:
     try:
@@ -118,6 +255,7 @@ def get_settings() -> dict:
         if data.get("currency") not in ("EUR","USD","GBP"):
             data["currency"] = DEFAULT_SETTINGS["currency"]
         data["timezone"] = validate_timezone(data.get("timezone"))
+        data["language"] = validate_language(data.get("language"))
         return data
     except Exception:
         return DEFAULT_SETTINGS.copy()
@@ -134,7 +272,8 @@ def append_settings_to_ledger(s: dict):
         theme=s.get("theme", DEFAULT_SETTINGS["theme"]),
         fade_start=float(s.get("fade_start", DEFAULT_SETTINGS["fade_start"])),
         currency=s.get("currency", DEFAULT_SETTINGS["currency"]),
-        timezone=s.get("timezone", DEFAULT_SETTINGS["timezone"])
+        timezone=s.get("timezone", DEFAULT_SETTINGS["timezone"]),
+        language=s.get("language", DEFAULT_SETTINGS["language"])
     )
     with write_lock:
         with open(LEDGER_PATH, "a", encoding="utf-8") as f:
@@ -202,6 +341,9 @@ async def index(request: Request):
     if guard: return guard
 
     settings = get_settings()
+    lang = settings["language"]
+    t = t_for(lang)
+
     rows = read_movements()
     balance = compute_balance(rows)
 
@@ -227,9 +369,10 @@ async def index(request: Request):
 
     movements = []
     for r in movements_src[:200]:
+        action_label = t["action_add"] if r.action == "add" else t["action_withdraw"]
         movements.append({
             "timestamp_display": format_display_date(r.timestamp, tz_name),
-            "action": r.action,
+            "action_display": action_label,
             "amount_display": format_currency(float(r.amount or 0.0), currency),
             "balance_display": format_currency(float(r.resulting_balance or 0.0), currency),
             "description": r.description or ""
@@ -241,7 +384,9 @@ async def index(request: Request):
         "balance_color": balance_color,
         "movements": movements,
         "app_name": APP_NAME,
-        "theme": settings["theme"]
+        "theme": settings["theme"],
+        "t": t,
+        "lang": lang
     })
 
 @app.get("/setup", response_class=HTMLResponse)
@@ -249,10 +394,14 @@ async def setup_get(request: Request):
     if is_initialized():
         return RedirectResponse("/", 303)
     settings = get_settings()
+    lang = settings["language"]
+    t = t_for(lang)
     return templates.TemplateResponse("setup.html", {
         "request": request,
         "app_name": APP_NAME,
-        "theme": settings["theme"]
+        "theme": settings["theme"],
+        "t": t,
+        "lang": lang
     })
 
 @app.post("/setup", response_class=HTMLResponse)
@@ -265,25 +414,31 @@ async def setup_post(
     if is_initialized():
         return RedirectResponse("/", 303)
 
+    settings = get_settings()
+    lang = settings["language"]
+    t = t_for(lang)
+
     if setup_mode == "import":
         if not ledger_file:
-            s = get_settings()
             return templates.TemplateResponse("setup.html", {
                 "request": request,
-                "error": "Please choose a ledger file to import.",
+                "error": t["error_file_required"],
                 "app_name": APP_NAME,
-                "theme": s["theme"]
+                "theme": settings["theme"],
+                "t": t,
+                "lang": lang
             }, status_code=400)
         content = await ledger_file.read()
         text = content.decode("utf-8", errors="ignore")
         lines = [ln.strip() for ln in text.splitlines() if ln.strip()]
         if not lines:
-            s = get_settings()
             return templates.TemplateResponse("setup.html", {
                 "request": request,
-                "error": "Uploaded file is empty.",
+                "error": t["error_file_empty"],
                 "app_name": APP_NAME,
-                "theme": s["theme"]
+                "theme": settings["theme"],
+                "t": t,
+                "lang": lang
             }, status_code=400)
 
         parsed_any = False
@@ -301,7 +456,8 @@ async def setup_post(
                                     "theme": se.theme,
                                     "fade_start": float(se.fade_start),
                                     "currency": (se.currency or DEFAULT_SETTINGS["currency"]),
-                                    "timezone": validate_timezone(se.timezone)
+                                    "timezone": validate_timezone(se.timezone),
+                                    "language": validate_language(se.language)
                                 }
                             except Exception:
                                 pass
@@ -312,30 +468,33 @@ async def setup_post(
                     except Exception:
                         pass
         if not parsed_any:
-            s = get_settings()
             return templates.TemplateResponse("setup.html", {
                 "request": request,
-                "error": "File format invalid. Expecting JSON Lines exported by Savion.",
+                "error": t["error_file_invalid"],
                 "app_name": APP_NAME,
-                "theme": s["theme"]
+                "theme": settings["theme"],
+                "t": t,
+                "lang": lang
             }, status_code=400)
 
         if imported_settings:
             s = get_settings()
             s.update(imported_settings)
             s["timezone"] = validate_timezone(s.get("timezone"))
+            s["language"] = validate_language(s.get("language"))
             save_settings(s)
 
         return RedirectResponse("/", 303)
 
     else:
         if initial_balance is None:
-            s = get_settings()
             return templates.TemplateResponse("setup.html", {
                 "request": request,
-                "error": "Please enter an initial balance or choose Import.",
+                "error": t["error_initial_balance_required"],
                 "app_name": APP_NAME,
-                "theme": s["theme"]
+                "theme": settings["theme"],
+                "t": t,
+                "lang": lang
             }, status_code=400)
 
         s = get_settings()
@@ -382,7 +541,7 @@ async def export_ledger():
     guard = ensure_setup_page()
     if guard: return guard
 
-    # Ensure latest settings snapshot (includes timezone)
+    # Ensure latest settings snapshot (includes currency/timezone/language)
     s = get_settings()
     append_settings_to_ledger(s)
 
@@ -399,12 +558,16 @@ async def reset_get(request: Request):
     a = random.randint(20, 60)
     b = random.randint(5, 15)
     op = random.choice(["+","-"])
-    s = get_settings()
+    settings = get_settings()
+    lang = settings["language"]
+    t = t_for(lang)
     return templates.TemplateResponse("reset.html", {
         "request": request,
         "a": a, "b": b, "op": op,
         "app_name": APP_NAME,
-        "theme": s["theme"]
+        "theme": settings["theme"],
+        "t": t,
+        "lang": lang
     })
 
 @app.post("/reset", response_class=HTMLResponse)
@@ -419,17 +582,22 @@ async def reset_post(
     guard = ensure_setup_page()
     if guard: return guard
 
+    settings = get_settings()
+    lang = settings["language"]
+    t = t_for(lang)
+
     expected = a + b if op == "+" else a - b
     if confirm_text.strip().upper() != "RESET" or math_answer != expected:
-        s = get_settings()
         return templates.TemplateResponse("reset.html", {
             "request": request,
-            "error": "Verification failed. Type RESET and solve the math correctly.",
+            "error": t["error_reset_verification"],
             "a": random.randint(20,60),
             "b": random.randint(5,15),
             "op": random.choice(["+","-"]),
             "app_name": APP_NAME,
-            "theme": s["theme"]
+            "theme": settings["theme"],
+            "t": t,
+            "lang": lang
         }, status_code=400)
 
     # Log reset and wipe ledger
@@ -437,8 +605,7 @@ async def reset_post(
         try:
             rows = read_movements()
             balance = compute_balance(rows)
-            s = get_settings()
-            reset_entry = Movement(kind="reset", timestamp=now_iso_in_tz(s["timezone"]), note=f"Reset at balance {balance:.2f}")
+            reset_entry = Movement(kind="reset", timestamp=now_iso_in_tz(settings["timezone"]), note=f"Reset at balance {balance:.2f}")
             append_entry(reset_entry)
         except Exception:
             pass
@@ -457,13 +624,17 @@ async def reset_post(
 @app.get("/settings", response_class=HTMLResponse)
 async def settings_get(request: Request):
     s = get_settings()
+    lang = s["language"]
+    t = t_for(lang)
     tz_preview = format_now_preview(s["timezone"])
     return templates.TemplateResponse("settings.html", {
         "request": request,
         "app_name": APP_NAME,
         "theme": s["theme"],
         "settings": s,
-        "tz_preview": tz_preview
+        "tz_preview": tz_preview,
+        "t": t,
+        "lang": lang
     })
 
 @app.post("/settings", response_class=HTMLResponse)
@@ -473,6 +644,7 @@ async def settings_post(
     fade_start: float = Form(...),
     currency: Literal["EUR","USD","GBP"] = Form(...),
     timezone: str = Form(...),
+    language: Literal["en","es","fr"] = Form(...),
 ):
     # sanitize fade_start
     try:
@@ -487,6 +659,7 @@ async def settings_post(
     s["fade_start"] = fs
     s["currency"] = currency
     s["timezone"] = validate_timezone(timezone)
+    s["language"] = validate_language(language)
 
     # persist & snapshot
     save_settings(s)

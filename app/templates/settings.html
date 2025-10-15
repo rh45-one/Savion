@@ -1,9 +1,9 @@
 {% extends "base.html" %}
 {% block content %}
-<h2>Settings</h2>
+<h2>{{ t.settings_title }}</h2>
 
 <form action="/settings" method="post" class="card form-grid" style="max-width:720px">
-  <label>Theme
+  <label>{{ t.settings_theme }}
     <select name="theme" required>
       <option value="dark"    {% if settings.theme == 'dark' %}selected{% endif %}>Dark</option>
       <option value="light"   {% if settings.theme == 'light' %}selected{% endif %}>Light</option>
@@ -11,30 +11,38 @@
     </select>
   </label>
 
-  <label>Fade start (balance where green begins to fade)
+  <label>{{ t.settings_fade_start }}
     <input type="number" name="fade_start" step="1" min="1" value="{{ settings.fade_start|default(1000) }}" required>
   </label>
 
-  <label>Display currency
+  <label>{{ t.settings_currency }}
     <select name="currency" required>
-      <option value="EUR" {% if settings.currency == 'EUR' %}selected{% endif %}>€ Euro</option>
-      <option value="USD" {% if settings.currency == 'USD' %}selected{% endif %}>$ US Dollar</option>
-      <option value="GBP" {% if settings.currency == 'GBP' %}selected{% endif %}>£ British Pound</option>
+      <option value="EUR" {% if settings.currency == 'EUR' %}selected{% endif %}>{{ t.currency_eur }}</option>
+      <option value="USD" {% if settings.currency == 'USD' %}selected{% endif %}>{{ t.currency_usd }}</option>
+      <option value="GBP" {% if settings.currency == 'GBP' %}selected{% endif %}>{{ t.currency_gbp }}</option>
     </select>
   </label>
 
-  <label>Timezone (IANA, e.g., <code>Europe/Madrid</code>)
+  <label>{{ t.settings_timezone }}
     <input id="tzInput" type="text" name="timezone" value="{{ settings.timezone|default('Europe/Madrid') }}" required>
     <small id="tzPreview" style="color: var(--muted); display:block; margin-top:6px;">
-      Current time in <strong>{{ settings.timezone }}</strong>: {{ tz_preview }}
+      {{ t.tz_preview_prefix }} <strong>{{ settings.timezone }}</strong>: {{ tz_preview }}
     </small>
   </label>
 
-  <button type="submit">Save</button>
+  <label>{{ t.settings_language }}
+    <select name="language" required>
+      <option value="en" {% if settings.language == 'en' %}selected{% endif %}>{{ t.language_en }}</option>
+      <option value="es" {% if settings.language == 'es' %}selected{% endif %}>{{ t.language_es }}</option>
+      <option value="fr" {% if settings.language == 'fr' %}selected{% endif %}>{{ t.language_fr }}</option>
+    </select>
+  </label>
+
+  <button type="submit">{{ t.settings_save }}</button>
 </form>
 
 <script>
-  // Live timezone preview without listing cities; user types IANA zone
+  // Live timezone preview
   (function () {
     var input = document.getElementById('tzInput');
     var preview = document.getElementById('tzPreview');
@@ -42,28 +50,23 @@
 
     function render(zone) {
       if (!zone || !zone.trim()) {
-        preview.innerHTML = 'Enter an IANA timezone, e.g. <code>Europe/Madrid</code>.';
+        preview.innerHTML = '{{ t.settings_timezone|escape }}';
         return;
       }
       try {
         var now = new Date();
-        // European format via en-GB locale; show DD/MM/YYYY HH:MM
         var s = now.toLocaleString('en-GB', {
           timeZone: zone,
           year: 'numeric', month: '2-digit', day: '2-digit',
           hour: '2-digit', minute: '2-digit', hour12: false
         }).replace(',', '');
-        preview.innerHTML = 'Current time in <strong>' + zone + '</strong>: ' + s;
+        preview.innerHTML = '{{ t.tz_preview_prefix }} ' + '<strong>' + zone + '</strong>: ' + s;
       } catch (e) {
-        // RangeError for invalid timeZone
-        preview.innerHTML = '⚠️ Invalid timezone. Try something like <code>Europe/Madrid</code> or <code>America/New_York</code>.';
+        preview.innerHTML = '⚠️ Invalid timezone.';
       }
     }
 
-    // Initial render (in case value changed server-side)
     render(input.value);
-
-    // Update on user input
     input.addEventListener('input', function () { render(input.value); });
     input.addEventListener('change', function () { render(input.value); });
   })();
