@@ -19,6 +19,31 @@ docker build -t savion .
 docker run -d --name savion -p 8000:8000 -e DATA_DIR=/data -v savion_data:/data savion
 ```
 
+Pull prebuilt image from Docker Hub:
+
+```powershell
+docker pull rh45one/savion:latest
+docker run -d --name savion -p 8000:8000 -e DATA_DIR=/data -v savion_data:/data rh45one/savion:latest
+```
+
+Docker Compose (pull from Docker Hub):
+
+```yaml
+version: '3.8'
+services:
+  savion:
+    image: rh45one/savion:latest
+    ports:
+      - '8000:8000'
+    environment:
+      - DATA_DIR=/data
+    volumes:
+      - savion_data:/data
+
+volumes:
+  savion_data:
+```
+
 Local (development):
 
 ```powershell
@@ -32,7 +57,8 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 - Files stored in `DATA_DIR`:
   - `ledger.jsonl` — newline-delimited JSON ledger.
   - `settings.json` — app settings snapshot.
- - Languages: `en`, `es`, `fr`, `zh`, `pt`, `ja`, `de`, `it` (selectable in Settings). Translations are in `app/translations.json`.
+
+- Languages: `en`, `es`, `fr`, `zh`, `pt`, `ja`, `de`, `it` (selectable in Settings). Translations are in `app/translations.json`.
 
 ## Features
 
