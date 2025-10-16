@@ -1,40 +1,40 @@
 {% extends "base.html" %}
 {% block content %}
-<h2>Setup</h2>
+<h2>{{ t.setup_title }}</h2>
 
 <div class="setup-grid">
   <!-- Fresh setup -->
   <section class="card setup-card">
-    <h3 class="setup-title">Fresh setup</h3>
-    <p class="setup-sub">{{ "Start a new ledger with an initial balance." }}</p>
+    <h3 class="setup-title">{{ t.setup_fresh_title }}</h3>
+    <p class="setup-sub">{{ t.setup_fresh_subtitle }}</p>
 
     <form action="/setup" method="post" class="form-grid setup-form">
       <input type="hidden" name="setup_mode" value="fresh">
 
-      <label>Initial balance
+      <label>{{ t.setup_initial_label }}
         <input type="number" name="initial_balance" step="0.01" min="0" required>
       </label>
 
       <div class="actions">
-        <button type="submit">Start</button>
+        <button type="submit">{{ t.setup_create_btn }}</button>
       </div>
     </form>
   </section>
 
-  <!-- Import existing ledger -->
+  <!-- Import existing -->
   <section class="card setup-card">
-    <h3 class="setup-title">Import existing ledger</h3>
-    <p class="setup-sub">Restore from a previously exported <code>.jsonl</code> file.</p>
+    <h3 class="setup-title">{{ t.setup_import_title }}</h3>
+    <p class="setup-sub">{{ t.setup_import_subtitle }}</p>
 
     <form action="/setup" method="post" enctype="multipart/form-data" class="form-grid setup-form">
       <input type="hidden" name="setup_mode" value="import">
 
-      <label>Ledger file
+      <label>{{ t.setup_ledger_file_label }}
         <input type="file" name="ledger_file" accept=".jsonl,text/plain" required>
       </label>
 
       <div class="actions">
-        <button type="submit">Import</button>
+        <button type="submit">{{ t.setup_import_btn }}</button>
       </div>
     </form>
   </section>

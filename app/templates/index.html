@@ -27,18 +27,19 @@
     <!-- Tags (checkboxes) -->
     <div class="tag-picker" style="grid-column: 1 / -1;">
       <div class="label">{{ t.form_tags }}</div>
-      {% if tag_types and tag_types|length > 0 %}
-        <div class="tag-options">
-          {% for tg in tag_types %}
-            <label class="tag-option">
-              <input type="checkbox" name="tags" value="{{ tg.name }}">
-              <span class="tag-chip" style="background: {{ tg.color }};">{{ tg.name }}</span>
-            </label>
-          {% endfor %}
-        </div>
-      {% else %}
-        <small class="muted">No tags defined yet — add some in Settings.</small>
-      {% endif %}
+      <!-- inside the Add/Withdraw form, tags area -->
+        {% if tag_types and tag_types|length > 0 %}
+          <div class="tag-options">
+            {% for tg in tag_types %}
+              <label class="tag-option">
+                <input type="checkbox" name="tags" value="{{ tg.name }}">
+                <span class="tag-chip" style="background: {{ tg.color }};">{{ tg.name }}</span>
+              </label>
+            {% endfor %}
+          </div>
+        {% else %}
+          <small class="muted">{{ t.no_tags_defined }}</small>
+        {% endif %}
     </div>
 
     <button type="submit">{{ t.form_submit }}</button>

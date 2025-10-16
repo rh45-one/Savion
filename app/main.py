@@ -23,6 +23,10 @@ EN_TRANSLATIONS: Dict[str, str] = {
     "nav_export": "Export",
     "nav_settings": "Settings",
     "nav_reset": "Reset",
+
+    "nav_open_menu": "Open menu",
+    "nav_close_menu": "Close menu",
+
     "balance_current": "Current Balance",
     "section_add_withdraw": "Add / Withdraw",
     "form_action": "Action",
@@ -32,6 +36,7 @@ EN_TRANSLATIONS: Dict[str, str] = {
     "form_description_optional": "Description (optional)",
     "form_submit": "Submit",
     "form_tags": "Tags",
+
     "section_recent": "Recent Movements",
     "table_date": "Date",
     "table_action": "Action",
@@ -40,6 +45,7 @@ EN_TRANSLATIONS: Dict[str, str] = {
     "table_description": "Description",
     "table_tags": "Tags",
     "table_empty": "No movements yet.",
+
     "settings_title": "Settings",
     "settings_theme": "Theme",
     "settings_fade_start": "Fade start (balance where green begins to fade)",
@@ -59,12 +65,7 @@ EN_TRANSLATIONS: Dict[str, str] = {
     "language_it": "Italiano (IT)",
     "settings_save": "Save",
     "tz_preview_prefix": "Current time in",
-    # Errors
-    "error_file_required": "Please choose a ledger file to import.",
-    "error_file_empty": "Uploaded file is empty.",
-    "error_file_invalid": "File format invalid. Expecting JSON Lines exported by Savion.",
-    "error_initial_balance_required": "Please enter an initial balance or choose Import.",
-    "error_reset_verification": "Verification failed. Type RESET and solve the math correctly.",
+
     # Filters
     "filters_title": "Filters",
     "filters_search": "Search",
@@ -79,19 +80,54 @@ EN_TRANSLATIONS: Dict[str, str] = {
     "filters_apply": "Apply",
     "filters_clear": "Clear",
     "filters_tags": "Tags",
-    # Tags management
+
+    # Tags management (Settings)
     "settings_tags_group": "Tag types",
     "settings_tags_help": "Add/remove tags to use on movements. Pick a color for each.",
     "settings_tag_name": "Name",
     "settings_tag_color": "Color",
     "settings_add_tag": "Add tag type",
     "settings_remove": "Remove",
+
     # Editing UI
     "edit": "Edit",
     "save": "Save",
     "cancel": "Cancel",
     "edit_description": "Edit description",
-    "edit_tags": "Edit tags"
+    "edit_tags": "Edit tags",
+
+    # Extra UI copy
+    "no_tags_defined": "No tags defined yet — add some in Settings.",
+    "placeholder_example_tag": "e.g., Groceries",
+    "error_invalid_timezone": "⚠️ Invalid timezone.",
+
+    # Setup page
+    "setup_title": "Setup",
+    "setup_fresh_title": "Fresh setup",
+    "setup_fresh_subtitle": "Start a new ledger with an initial balance.",
+    "setup_initial_label": "Initial balance",
+    "setup_create_btn": "Create",
+    "setup_import_title": "Import existing ledger",
+    "setup_import_subtitle": "Choose an exported file to continue where you left off.",
+    "setup_ledger_file_label": "Ledger file",
+    "setup_import_btn": "Import",
+
+    # Reset page
+    "reset_title": "Reset Savion",
+    "reset_warning": "This will erase all data. We recommend exporting your ledger before continuing.",
+    "reset_type_label": "Type RESET to confirm",
+    "reset_math_label": "Solve",
+    "reset_button": "Erase everything",
+
+    # Footer
+    "footer_tagline": "Simple, local-first money tracker.",
+
+    # Errors
+    "error_file_required": "Please choose a ledger file to import.",
+    "error_file_empty": "Uploaded file is empty.",
+    "error_file_invalid": "File format invalid. Expecting JSON Lines exported by Savion.",
+    "error_initial_balance_required": "Please enter an initial balance or choose Import.",
+    "error_reset_verification": "Verification failed. Type RESET and solve the math correctly.",
 }
 
 TRANSLATIONS_PATH = os.path.join(BASE_DIR, "translations.json")

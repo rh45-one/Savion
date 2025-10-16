@@ -42,8 +42,6 @@
       <option value="ja" {% if settings.language == 'ja' %}selected{% endif %}>{{ t.language_ja }}</option>
       <option value="de" {% if settings.language == 'de' %}selected{% endif %}>{{ t.language_de }}</option>
       <option value="it" {% if settings.language == 'it' %}selected{% endif %}>{{ t.language_it }}</option>
-      <option value="tlh" {% if settings.language == 'tlh' %}selected{% endif %}>{{ t.language_tlh }}</option>
-
     </select>
   </label>
 
@@ -57,7 +55,7 @@
       <div class="tag-row">
         <label class="tag-col">
           <span class="tag-label">{{ t.settings_tag_name }}</span>
-          <input type="text" name="tag_name" value="{{ tg.name }}" placeholder="e.g. Groceries" required>
+          <input type="text" name="tag_name" value="{{ tg.name }}" placeholder="{{ t.placeholder_example_tag }}" required>
         </label>
         <label class="tag-col tag-color-col">
           <span class="tag-label">{{ t.settings_tag_color }}</span>
@@ -91,7 +89,9 @@
           hour:'2-digit', minute:'2-digit', hour12:false
         }).replace(',', '');
         preview.innerHTML = '{{ t.tz_preview_prefix }} ' + '<strong>' + zone + '</strong>: ' + s;
-      } catch (e) { preview.innerHTML = '⚠️ Invalid timezone.'; }
+      } catch (e) {
+        preview.innerHTML = {{ t.error_invalid_timezone|tojson }};
+      }
     }
     render(input.value);
     input.addEventListener('input', function(){ render(input.value); });
@@ -115,7 +115,7 @@
       div.innerHTML = `
         <label class="tag-col">
           <span class="tag-label">{{ t.settings_tag_name }}</span>
-          <input type="text" name="tag_name" value="${name || ''}" placeholder="e.g. Groceries" required>
+          <input type="text" name="tag_name" value="${name || ''}" placeholder="{{ t.placeholder_example_tag }}" required>
         </label>
         <label class="tag-col tag-color-col">
           <span class="tag-label">{{ t.settings_tag_color }}</span>
