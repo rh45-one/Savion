@@ -30,11 +30,9 @@
       {% if tag_types and tag_types|length > 0 %}
         <div class="tag-options">
           {% for tg in tag_types %}
-            {% set name = tg.name %}
-            {% set color = tg.color %}
             <label class="tag-option">
-              <input type="checkbox" name="tags" value="{{ name }}">
-              <span class="tag-chip" style="background: {{ color }};">{{ name }}</span>
+              <input type="checkbox" name="tags" value="{{ tg.name }}">
+              <span class="tag-chip" style="background: {{ tg.color }};">{{ tg.name }}</span>
             </label>
           {% endfor %}
         </div>
@@ -88,11 +86,9 @@
         <div class="label">{{ t.filters_tags }}</div>
         <div class="tag-options">
           {% for tg in tag_types %}
-            {% set name = tg.name %}
-            {% set color = tg.color %}
             <label class="tag-option">
-              <input type="checkbox" name="tags" value="{{ name }}" {% if name in selected_tags %}checked{% endif %}>
-              <span class="tag-chip" style="background: {{ color }};">{{ name }}</span>
+              <input type="checkbox" name="tags" value="{{ tg.name }}" {% if tg.name in selected_tags %}checked{% endif %}>
+              <span class="tag-chip" style="background: {{ tg.color }};">{{ tg.name }}</span>
             </label>
           {% endfor %}
         </div>
@@ -122,7 +118,41 @@
         <div class="cell" data-label="{{ t.table_action }}">{{ r.action_display }}</div>
         <div class="cell" data-label="{{ t.table_amount }}">{{ r.amount_display }}</div>
         <div class="cell" data-label="{{ t.table_balance }}">{{ r.balance_display }}</div>
-        <div class="cell" data-label="{{ t.table_description }}">{{ r.description }}</div>
+
+        <!-- Description + inline edit -->
+        <div class="cell" data-label="{{ t.table_description }}">
+          <span class="desc-text">{{ r.description }}</span>
+          <button class="icon-btn edit-btn" type="button" data-target="{{ r.ts_raw }}" aria-label="{{ t.edit }}">
+            <svg viewBox="0 0 24 24" class="icon-16" aria-hidden="true">
+              <path fill="currentColor" d="M20.71,7.04l-3.75-3.75c-0.39-0.39-1.02-0.39-1.41,0l-9.5,9.5c-0.09,0.09-0.16,0.2-0.21,0.33l-1.5,4.5c-0.17,0.51,0.3,0.98,0.81,0.81l4.5-1.5c0.12-0.04,0.23-0.11,0.33-0.21l9.5-9.5C21.1,8.06,21.1,7.43,20.71,7.04zM7.04,17l-2.12,0.71L5.63,15.6L7.04,17zM8.46,16.29l-0.75-0.75L16.5,6.75l0.75,0.75L8.46,16.29z"/>
+            </svg>
+          </button>
+
+          <!-- Inline edit form (hidden until pencil clicked) -->
+          <form class="edit-form" action="/movement/edit" method="post" hidden>
+            <input type="hidden" name="target_ts" value="{{ r.ts_raw }}">
+            <label class="sr-only">{{ t.edit_description }}</label>
+            <input type="text" name="new_description" value="{{ r.description }}" placeholder="{{ t.edit_description }}">
+
+            {% if tag_types and tag_types|length > 0 %}
+            <div class="tag-options" style="margin-top: 8px;">
+              {% for tg in tag_types %}
+                <label class="tag-option">
+                  <input type="checkbox" name="tags" value="{{ tg.name }}" {% if tg.name in r.tags_names %}checked{% endif %}>
+                  <span class="tag-chip" style="background: {{ tg.color }};">{{ tg.name }}</span>
+                </label>
+              {% endfor %}
+            </div>
+            {% endif %}
+
+            <div class="edit-actions">
+              <button type="submit">{{ t.save }}</button>
+              <button type="button" class="cancel-edit">{{ t.cancel }}</button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Tags display -->
         <div class="cell" data-label="{{ t.table_tags }}">
           {% if r.tags and r.tags|length > 0 %}
             <div class="tag-list">
@@ -140,5 +170,42 @@
     {% endfor %}
   </div>
 </section>
+
+<script>
+  // Inline edit toggle handlers
+  (function () {
+    function closestCell(node) {
+      return node.closest('.cell');
+    }
+    document.querySelectorAll('.edit-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var cell = closestCell(btn);
+        if (!cell) return;
+        var form = cell.querySelector('.edit-form');
+        if (!form) return;
+        form.hidden = !form.hidden;
+        if (!form.hidden) {
+          var input = form.querySelector('input[type="text"]');
+          if (input) { input.focus(); input.select(); }
+        }
+      });
+    });
+    document.querySelectorAll('.cancel-edit').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var form = btn.closest('.edit-form');
+        if (form) form.hidden = true;
+      });
+    });
+    // Close any open editor if clicking outside
+    document.addEventListener('click', function (e) {
+      var openForms = document.querySelectorAll('.edit-form:not([hidden])');
+      openForms.forEach(function (f) {
+        if (!f.contains(e.target) && !f.previousElementSibling.contains(e.target)) {
+          f.hidden = true;
+        }
+      });
+    });
+  })();
+</script>
 
 {% endblock %}

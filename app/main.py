@@ -15,7 +15,7 @@ SETTINGS_PATH = os.path.join(DATA_DIR, "settings.json")
 os.makedirs(DATA_DIR, exist_ok=True)
 
 # --- Supported languages ---
-SUPPORTED_LANGS = ("en", "es", "fr", "zh", "pt", "ja", "de", "it", "tlh")
+SUPPORTED_LANGS = ("en", "es", "fr", "zh", "pt", "ja", "de", "it")
 
 # --- English translations (fallback) ---
 EN_TRANSLATIONS: Dict[str, str] = {
@@ -57,7 +57,6 @@ EN_TRANSLATIONS: Dict[str, str] = {
     "language_ja": "日本語 (JA)",
     "language_de": "Deutsch (DE)",
     "language_it": "Italiano (IT)",
-    "language_tlh": "Klingon (TLH)",
     "settings_save": "Save",
     "tz_preview_prefix": "Current time in",
     # Errors
@@ -87,9 +86,14 @@ EN_TRANSLATIONS: Dict[str, str] = {
     "settings_tag_color": "Color",
     "settings_add_tag": "Add tag type",
     "settings_remove": "Remove",
+    # Editing UI
+    "edit": "Edit",
+    "save": "Save",
+    "cancel": "Cancel",
+    "edit_description": "Edit description",
+    "edit_tags": "Edit tags"
 }
 
-# External translations (non-English)
 TRANSLATIONS_PATH = os.path.join(BASE_DIR, "translations.json")
 _EXTERNAL_TRANSLATIONS: Dict[str, Dict[str, str]] = {}
 
@@ -117,7 +121,7 @@ def t_for(lang: str) -> Dict[str, str]:
     merged.update(bundle)
     return merged
 
-# --- Default settings (extended with tag types) ---
+# --- Default settings ---
 DEFAULT_SETTINGS = {
     "theme": "dark",            # "dark" | "light" | "dracula" | "winclassic" | "system1"
     "fade_start": 1000.0,
@@ -152,8 +156,16 @@ class SettingsEntry(BaseModel):
     fade_start: float
     currency: Optional[Literal["EUR","USD","GBP"]] = None
     timezone: Optional[str] = None
-    language: Optional[Literal["en","es","fr","zh","pt","ja","de","it","tlh"]] = None
+    language: Optional[Literal["en","es","fr","zh","pt","ja","de","it"]] = None
     tag_types: Optional[List[Dict[str, Any]]] = None
+
+class EditEntry(BaseModel):
+    """Non-destructive edits for movements (description/tags only)."""
+    kind: Literal["edit"]
+    timestamp: str            # when the edit happened
+    target_ts: str            # identifies the movement by its original timestamp
+    new_description: Optional[str] = None
+    new_tags: Optional[List[str]] = None
 
 # --- Helpers ---
 def validate_timezone(tz: Optional[str]) -> str:
@@ -298,6 +310,16 @@ def read_movements() -> List[Movement]:
                 continue
     return rows
 
+def read_edits() -> List[EditEntry]:
+    edits: List[EditEntry] = []
+    for obj in read_ledger_entries():
+        if obj.get("kind") == "edit":
+            try:
+                edits.append(EditEntry(**obj))
+            except Exception:
+                continue
+    return edits
+
 def compute_balance(rows: List[Movement]) -> float:
     balance = 0.0
     for r in rows:
@@ -307,7 +329,7 @@ def compute_balance(rows: List[Movement]) -> float:
             balance += float(r.delta)
     return round(balance, 2)
 
-def append_entry(entry: Movement):
+def append_entry(entry: BaseModel):
     with write_lock:
         with open(LEDGER_PATH, "a", encoding="utf-8") as f:
             f.write(json.dumps(entry.dict(), ensure_ascii=False) + "\n")
@@ -353,6 +375,14 @@ async def index(request: Request):
     tz_name = settings["timezone"]
     balance_display = format_currency(balance, currency)
 
+    # Build overrides from edits (last write wins by file order)
+    overrides: Dict[str, Dict[str, Any]] = {}
+    for e in read_edits():
+        overrides[e.target_ts] = {
+            "description": (e.new_description if e.new_description is not None else None),
+            "tags": (e.new_tags if e.new_tags is not None else None)
+        }
+
     # Filters
     qp = request.query_params
     q = (qp.get("q") or "").strip()
@@ -386,7 +416,25 @@ async def index(request: Request):
     tag_types = settings.get("tag_types", [])
     tag_color_map = { (t["name"] or "").strip().lower(): t.get("color", "#777777") for t in tag_types }
 
-    movements_src = [r for r in rows if r.kind == "movement"]
+    base_movs = [r for r in rows if r.kind == "movement"]
+
+    def apply_override(m: Movement) -> Movement:
+        ov = overrides.get(m.timestamp)
+        if not ov:
+            return m
+        # make a shallow copy with patched fields
+        md = m.dict()
+        if ov.get("description") is not None:
+            md["description"] = ov["description"]
+        if ov.get("tags") is not None:
+            md["tags"] = ov["tags"]
+        try:
+            return Movement(**md)
+        except Exception:
+            return m
+
+    # Apply overrides before filtering
+    movs = [apply_override(m) for m in base_movs]
 
     def passes_filters(m: Movement) -> bool:
         if action_filter in ("add","withdraw") and (m.action or "") != action_filter:
@@ -404,16 +452,16 @@ async def index(request: Request):
         if max_amount is not None and m_amt > max_amount: return False
         if q:
             ql = q.lower()
-            hay = f"{m.description or ''} {m.action or ''} {format_display_date(m.timestamp, tz_name)} {' '.join(m.tags or [])}".lower()
+            tags_str = " ".join(m.tags or [])
+            hay = f"{m.description or ''} {m.action or ''} {format_display_date(m.timestamp, tz_name)} {tags_str}".lower()
             if ql not in hay: return False
         if selected_tags:
             mtags = [s.lower() for s in (m.tags or [])]
-            # ANY of selected tags:
             if not any(tag.lower() in mtags for tag in selected_tags):
                 return False
         return True
 
-    filtered = [m for m in movements_src if passes_filters(m)]
+    filtered = [m for m in movs if passes_filters(m)]
     filtered.sort(key=lambda r: parse_ts(r.timestamp), reverse=True)
 
     movements = []
@@ -425,12 +473,14 @@ async def index(request: Request):
             color = tag_color_map.get(key, "#777777")
             tags_display.append({"name": tag, "color": color})
         movements.append({
+            "ts_raw": r.timestamp,  # identifier for edit target
             "timestamp_display": format_display_date(r.timestamp, tz_name),
             "action_display": action_label,
             "amount_display": format_currency(float(r.amount or 0.0), currency),
             "balance_display": format_currency(float(r.resulting_balance or 0.0), currency),
             "description": r.description or "",
-            "tags": tags_display
+            "tags": tags_display,
+            "tags_names": [tg["name"] for tg in tags_display]
         })
 
     return templates.TemplateResponse("index.html", {
@@ -522,7 +572,11 @@ async def setup_post(
                             except Exception:
                                 pass
                         else:
-                            Movement(**obj)
+                            # Validate movements/edits structurally
+                            if k == "edit":
+                                EditEntry(**obj)
+                            else:
+                                Movement(**obj)
                         f.write(json.dumps(obj, ensure_ascii=False) + "\n")
                         parsed_any = True
                     except Exception:
@@ -591,6 +645,38 @@ async def add_movement(
         description=description or "",
         resulting_balance=new_balance,
         tags=norm_tags
+    )
+    append_entry(entry)
+    return RedirectResponse("/", 303)
+
+@app.post("/movement/edit")
+async def edit_movement(
+    target_ts: str = Form(...),
+    new_description: Optional[str] = Form(default=None),
+    tags: List[str] = Form(default=[])
+):
+    """Append a non-destructive edit entry for an existing movement."""
+    guard = ensure_setup_page()
+    if guard: return guard
+
+    s = get_settings()
+    # Normalize tags
+    norm_tags: List[str] = []
+    seen = set()
+    for tname in tags or []:
+        nm = (tname or "").strip()
+        if not nm: continue
+        key = nm.lower()
+        if key in seen: continue
+        seen.add(key)
+        norm_tags.append(nm)
+
+    entry = EditEntry(
+        kind="edit",
+        timestamp=now_iso_in_tz(s["timezone"]),
+        target_ts=target_ts,
+        new_description=(new_description or ""),
+        new_tags=norm_tags
     )
     append_entry(entry)
     return RedirectResponse("/", 303)
@@ -690,7 +776,7 @@ async def settings_post(
     fade_start: float = Form(...),
     currency: Literal["EUR","USD","GBP"] = Form(...),
     timezone: str = Form(...),
-    language: Literal["en","es","fr","zh","pt","ja","de","it","tlh"] = Form(...),
+    language: Literal["en","es","fr","zh","pt","ja","de","it"] = Form(...),
     tag_name: List[str] = Form(default=[]),
     tag_color: List[str] = Form(default=[]),
 ):
