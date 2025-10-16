@@ -15,7 +15,7 @@ SETTINGS_PATH = os.path.join(DATA_DIR, "settings.json")
 os.makedirs(DATA_DIR, exist_ok=True)
 
 # --- Supported languages ---
-SUPPORTED_LANGS = ("en", "es", "fr", "zh", "pt", "ja", "de", "it")
+SUPPORTED_LANGS = ("en", "es", "fr", "zh", "pt", "ja", "de", "it", "tlh")
 
 # --- English translations (fallback) ---
 EN_TRANSLATIONS: Dict[str, str] = {
@@ -57,6 +57,7 @@ EN_TRANSLATIONS: Dict[str, str] = {
     "language_ja": "日本語 (JA)",
     "language_de": "Deutsch (DE)",
     "language_it": "Italiano (IT)",
+    "language_tlh": "Klingon (TLH)",
     "settings_save": "Save",
     "tz_preview_prefix": "Current time in",
     # Errors
@@ -151,7 +152,7 @@ class SettingsEntry(BaseModel):
     fade_start: float
     currency: Optional[Literal["EUR","USD","GBP"]] = None
     timezone: Optional[str] = None
-    language: Optional[Literal["en","es","fr","zh","pt","ja","de","it"]] = None
+    language: Optional[Literal["en","es","fr","zh","pt","ja","de","it","tlh"]] = None
     tag_types: Optional[List[Dict[str, Any]]] = None
 
 # --- Helpers ---
@@ -689,7 +690,7 @@ async def settings_post(
     fade_start: float = Form(...),
     currency: Literal["EUR","USD","GBP"] = Form(...),
     timezone: str = Form(...),
-    language: Literal["en","es","fr","zh","pt","ja","de","it"] = Form(...),
+    language: Literal["en","es","fr","zh","pt","ja","de","it","tlh"] = Form(...),
     tag_name: List[str] = Form(default=[]),
     tag_color: List[str] = Form(default=[]),
 ):

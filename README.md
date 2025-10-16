@@ -58,7 +58,7 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
   - `ledger.jsonl` — newline-delimited JSON ledger.
   - `settings.json` — app settings snapshot.
 
-- Languages: `en`, `es`, `fr`, `zh`, `pt`, `ja`, `de`, `it` (selectable in Settings). Translations are in `app/translations.json`.
+- Languages: `en`, `es`, `fr`, `zh`, `pt`, `ja`, `de`, `it`, `tlh` (selectable in Settings). Translations are in `app/translations.json`.
 
 ## Features
 
