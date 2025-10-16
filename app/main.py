@@ -53,7 +53,7 @@ EN_TRANSLATIONS: Dict[str, str] = {
     "currency_eur": "€ Euro",
     "currency_usd": "$ US Dollar",
     "currency_gbp": "£ British Pound",
-    "settings_timezone": "Timezone (IANA, e.g., Europe/Madrid)",
+    "settings_timezone": "Timezone (IANA, e.g., Europe/London)",
     "settings_language": "Language",
     "language_en": "English (EN)",
     "language_es": "Español (ES)",
