@@ -167,7 +167,7 @@ DEFAULT_SETTINGS = {
     "theme": "dark",            # "dark" | "light" | "dracula" | "winclassic" | "system1"
     "fade_start": 1000.0,
     "currency": "EUR",
-    "timezone": "Europe/Madrid",
+    "timezone": "Europe/London",
     "language": "en",
     "tag_types": []             # list of {"name": str, "color": "#RRGGBB"}
 }
