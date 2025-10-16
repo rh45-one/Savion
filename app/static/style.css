@@ -425,3 +425,50 @@ select {
     justify-self: end;
   }
 }
+
+/* === Tag editor alignment polish === */
+
+/* Keep the tag section compact and consistent with cards */
+.tag-editor { max-width: 760px; }
+
+/* Align inputs + color + remove button on the same baseline */
+.tag-row { align-items: center; }
+
+/* Make remove button exactly the same height as inputs and not wander */
+.tag-row .tag-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 44px;           /* matches input/select min-height */
+  padding: 0 14px;        /* balanced with global button padding */
+  line-height: 1;
+  white-space: nowrap;
+  justify-self: end;      /* pins to the right column edge on desktop */
+}
+
+/* Toolbar uses consistent spacing and height for buttons */
+.tag-toolbar {
+  margin-top: 12px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.tag-toolbar > * { min-height: 44px; }
+
+/* When no rows exist, keep the Add button aligned to the left to avoid odd empty space */
+.tag-rows:empty + .tag-toolbar { justify-content: flex-start; }
+
+/* Hover/active/focus states tuned for destructive remove button */
+button.tag-remove.danger:hover { filter: brightness(1.05); }
+button.tag-remove.danger:active { transform: translateY(0); }
+button.tag-remove.danger:focus-visible { outline: 2px solid var(--danger); outline-offset: 2px; }
+button.tag-remove[disabled] { opacity: .5; cursor: not-allowed; }
+
+/* Mobile: stack cleanly; put Remove full-width under the fields for readability */
+@media (max-width: 600px) {
+  .tag-row .tag-remove {
+    grid-column: 1 / -1;
+    justify-self: stretch;
+    width: 100%;
+  }
+}

@@ -61,7 +61,8 @@
           <span class="tag-label">{{ t.settings_tag_color }}</span>
           <input type="color" name="tag_color" value="{{ tg.color|default('#777777') }}">
         </label>
-        <button type="button" class="tag-remove">{{ t.settings_remove }}</button>
+        <!-- Make remove button clearly destructive and perfectly aligned -->
+        <button type="button" class="tag-remove danger" aria-label="{{ t.settings_remove }}">{{ t.settings_remove }}</button>
       </div>
       {% endfor %}
     </div>
@@ -81,24 +82,18 @@
     var preview = document.getElementById('tzPreview');
     if (!input || !preview) return;
     function render(zone) {
-      if (!zone || !zone.trim()) {
-        preview.innerHTML = '{{ t.settings_timezone|escape }}';
-        return;
-      }
+      if (!zone || !zone.trim()) { preview.innerHTML = '{{ t.settings_timezone|escape }}'; return; }
       try {
         var s = new Date().toLocaleString('en-GB', {
-          timeZone: zone,
-          year: 'numeric', month: '2-digit', day: '2-digit',
-          hour: '2-digit', minute: '2-digit', hour12: false
+          timeZone: zone, year:'numeric', month:'2-digit', day:'2-digit',
+          hour:'2-digit', minute:'2-digit', hour12:false
         }).replace(',', '');
         preview.innerHTML = '{{ t.tz_preview_prefix }} ' + '<strong>' + zone + '</strong>: ' + s;
-      } catch (e) {
-        preview.innerHTML = '⚠️ Invalid timezone.';
-      }
+      } catch (e) { preview.innerHTML = '⚠️ Invalid timezone.'; }
     }
     render(input.value);
-    input.addEventListener('input', function () { render(input.value); });
-    input.addEventListener('change', function () { render(input.value); });
+    input.addEventListener('input', function(){ render(input.value); });
+    input.addEventListener('change', function(){ render(input.value); });
   })();
 
   // Tag editor
@@ -124,7 +119,7 @@
           <span class="tag-label">{{ t.settings_tag_color }}</span>
           <input type="color" name="tag_color" value="${color || '#777777'}">
         </label>
-        <button type="button" class="tag-remove">{{ t.settings_remove }}</button>
+        <button type="button" class="tag-remove danger">{{ t.settings_remove }}</button>
       `;
       div.querySelector('.tag-remove').addEventListener('click', onRemove);
       rows.appendChild(div);
