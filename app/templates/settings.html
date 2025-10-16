@@ -53,10 +53,12 @@
     <div id="tagRows" class="tag-rows">
       {% for tg in settings.tag_types %}
       <div class="tag-row">
-        <label>{{ t.settings_tag_name }}
-          <input type="text" name="tag_name" value="{{ tg.name }}" required>
+        <label class="tag-col">
+          <span class="tag-label">{{ t.settings_tag_name }}</span>
+          <input type="text" name="tag_name" value="{{ tg.name }}" placeholder="e.g. Groceries" required>
         </label>
-        <label>{{ t.settings_tag_color }}
+        <label class="tag-col tag-color-col">
+          <span class="tag-label">{{ t.settings_tag_color }}</span>
           <input type="color" name="tag_color" value="{{ tg.color|default('#777777') }}">
         </label>
         <button type="button" class="tag-remove">{{ t.settings_remove }}</button>
@@ -64,7 +66,7 @@
       {% endfor %}
     </div>
 
-    <div>
+    <div class="tag-toolbar">
       <button type="button" id="addTagBtn">{{ t.settings_add_tag }}</button>
     </div>
   </fieldset>
@@ -114,10 +116,12 @@
       var div = document.createElement('div');
       div.className = 'tag-row';
       div.innerHTML = `
-        <label>{{ t.settings_tag_name }}
-          <input type="text" name="tag_name" value="${name || ''}" required>
+        <label class="tag-col">
+          <span class="tag-label">{{ t.settings_tag_name }}</span>
+          <input type="text" name="tag_name" value="${name || ''}" placeholder="e.g. Groceries" required>
         </label>
-        <label>{{ t.settings_tag_color }}
+        <label class="tag-col tag-color-col">
+          <span class="tag-label">{{ t.settings_tag_color }}</span>
           <input type="color" name="tag_color" value="${color || '#777777'}">
         </label>
         <button type="button" class="tag-remove">{{ t.settings_remove }}</button>

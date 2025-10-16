@@ -371,3 +371,76 @@ select {
   .tag-row { grid-template-columns: 1fr 1fr; }
   .tag-row .tag-remove { grid-column: 1 / -1; justify-self: start; }
 }
+
+/* === Tag editor layout (Settings) === */
+.tag-editor {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px;
+  background: var(--card);
+  /* keep it from getting too wide within the card */
+  max-width: 760px;
+}
+
+.tag-rows {
+  display: grid;
+  gap: 12px; /* uniform separation between rows */
+}
+
+/* Each tag row uses a tidy grid:
+   - Name expands
+   - Color is compact
+   - Remove button aligns neatly to the right */
+.tag-row {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) 120px auto;
+  gap: 12px; /* uniform separation between columns */
+  align-items: end;
+}
+
+.tag-col {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.tag-label {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.tag-color-col input[type="color"] {
+  width: 44px;
+  height: 34px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--soft);
+}
+
+/* Remove button appearance aligns with other buttons via global styles;
+   we only tweak alignment here */
+.tag-row .tag-remove {
+  justify-self: end;
+  align-self: center;
+  min-width: 96px;
+}
+
+.tag-toolbar {
+  margin-top: 8px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px; /* uniform spacing for toolbar buttons */
+}
+
+/* Responsive: stack neatly on small screens */
+@media (max-width: 720px) {
+  .tag-editor { max-width: 100%; }
+  .tag-row {
+    grid-template-columns: 1fr 1fr;
+  }
+  .tag-row .tag-remove {
+    grid-column: 1 / -1;
+    justify-self: end;
+  }
+}
