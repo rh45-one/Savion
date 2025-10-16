@@ -5,15 +5,25 @@
 
 <form action="/reset" method="post" class="card danger-card">
   <label>{{ t.reset_type_label }}
-    <input type="text" name="confirm_text" required>
+    <input type="text" name="confirm_text" value="{{ confirm_text|default('') }}" required>
+    {% if confirm_error %}
+      <small class="field-error">{{ confirm_error }}</small>
+    {% endif %}
   </label>
+
   <div class="captcha">
     <span>{{ t.reset_math_label }}: {{ a }} {{ op }} {{ b }} =</span>
-    <input type="number" name="math_answer" required>
+    <!-- Use text+numeric hint so we can show our own validation but still get numeric keyboard -->
+    <input type="text" name="math_answer" inputmode="numeric" value="{{ math_answer|default('') }}" required>
+    {% if math_error %}
+      <small class="field-error">{{ math_error }}</small>
+    {% endif %}
+    <!-- Preserve the same challenge on error -->
     <input type="hidden" name="a" value="{{ a }}">
     <input type="hidden" name="b" value="{{ b }}">
     <input type="hidden" name="op" value="{{ op }}">
   </div>
+
   <br />
   <button type="submit" class="danger">{{ t.reset_button }}</button>
 </form>

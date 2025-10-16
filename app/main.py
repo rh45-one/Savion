@@ -118,6 +118,11 @@ EN_TRANSLATIONS: Dict[str, str] = {
     "reset_type_label": "Type RESET to confirm",
     "reset_math_label": "Solve",
     "reset_button": "Erase everything",
+    
+    # NEW granular error copy
+    "reset_error_word": "Type “RESET” exactly.",
+    "reset_error_math": "The math answer is incorrect.",
+    "reset_error_math_empty": "Enter the result of the equation.",
 
     # Footer
     "footer_tagline": "Simple, local-first money tracker.",
@@ -750,7 +755,7 @@ async def reset_post(
     a: int = Form(...),
     b: int = Form(...),
     op: str = Form(...),
-    math_answer: int = Form(...),
+    math_answer: Optional[str] = Form(None),
 ):
     guard = ensure_setup_page()
     if guard: return guard
@@ -759,24 +764,66 @@ async def reset_post(
     lang = settings["language"]
     t = t_for(lang)
 
+    # Compute expected answer
     expected = a + b if op == "+" else a - b
-    if confirm_text.strip().upper() != "RESET" or math_answer != expected:
-        return templates.TemplateResponse("reset.html", {
-            "request": request,
-            "error": t["error_reset_verification"],
-            "a": random.randint(20,60),
-            "b": random.randint(5,15),
-            "op": random.choice(["+","-"]),
-            "app_name": APP_NAME,
-            "theme": settings["theme"],
-            "t": t, "lang": lang
-        }, status_code=400)
 
+    # Normalize inputs
+    word_ok = (confirm_text or "").strip().upper() == "RESET"
+    math_str = (math_answer or "").strip()
+    try:
+        ans = int(math_str) if math_str != "" else None
+    except Exception:
+        ans = None
+    math_ok = (ans is not None) and (ans == expected)
+
+    # Collect errors (granular)
+    errors: list[str] = []
+    confirm_error = ""
+    math_error = ""
+    if not word_ok:
+        msg = t.get("reset_error_word", "Type “RESET” exactly.")
+        errors.append(msg)
+        confirm_error = msg
+    if not math_ok:
+        if ans is None:
+            msg = t.get("reset_error_math_empty", "Enter the result of the equation.")
+        else:
+            msg = t.get("reset_error_math", "The math answer is incorrect.")
+        errors.append(msg)
+        math_error = msg
+
+    if errors:
+        # Re-render SAME challenge to allow user to fix inputs; keep their values
+        return templates.TemplateResponse(
+            "reset.html",
+            {
+                "request": request,
+                "error": " ".join(errors),  # page-level alert via base.html
+                "a": a,
+                "b": b,
+                "op": op,
+                "confirm_text": confirm_text,
+                "math_answer": math_str,
+                "confirm_error": confirm_error,
+                "math_error": math_error,
+                "app_name": APP_NAME,
+                "theme": settings["theme"],
+                "t": t,
+                "lang": lang,
+            },
+            status_code=400,
+        )
+
+    # Proceed with destructive reset
     if os.path.exists(LEDGER_PATH):
         try:
             rows = read_movements()
             balance = compute_balance(rows)
-            reset_entry = Movement(kind="reset", timestamp=now_iso_in_tz(settings["timezone"]), note=f"Reset at balance {balance:.2f}")
+            reset_entry = Movement(
+                kind="reset",
+                timestamp=now_iso_in_tz(settings["timezone"]),
+                note=f"Reset at balance {balance:.2f}",
+            )
             append_entry(reset_entry)
         except Exception:
             pass

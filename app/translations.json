@@ -92,6 +92,10 @@
     "reset_math_label": "Resolver",
     "reset_button": "Borrar todo",
 
+  "reset_error_word": "Escribe “RESET” exactamente.",
+  "reset_error_math": "La respuesta de la operación es incorrecta.",
+  "reset_error_math_empty": "Introduce el resultado de la operación.",
+
     "footer_tagline": "Gestor de dinero sencillo y local.",
     "nav_open_menu": "Abrir menú",
     "nav_close_menu": "Cerrar menú"
@@ -189,6 +193,10 @@
     "reset_type_label": "Tapez RESET pour confirmer",
     "reset_math_label": "Calcul",
     "reset_button": "Tout effacer",
+
+  "reset_error_word": "Tapez « RESET » exactement.",
+  "reset_error_math": "La réponse au calcul est incorrecte.",
+  "reset_error_math_empty": "Saisissez le résultat du calcul.",
 
     "footer_tagline": "Suivi d’argent simple et local.",
     "nav_open_menu": "Ouvrir le menu",
@@ -288,6 +296,10 @@
     "reset_math_label": "计算",
     "reset_button": "清除所有内容",
 
+  "reset_error_word": "请准确输入“RESET”。",
+  "reset_error_math": "计算结果不正确。",
+  "reset_error_math_empty": "请输入计算结果。",
+
     "footer_tagline": "简洁、本地优先的记账器。",
     "nav_open_menu": "打开菜单",
     "nav_close_menu": "关闭菜单"
@@ -385,6 +397,10 @@
     "reset_type_label": "Digite RESET para confirmar",
     "reset_math_label": "Calcular",
     "reset_button": "Apagar tudo",
+
+  "reset_error_word": "Digite “RESET” exatamente.",
+  "reset_error_math": "A resposta do cálculo está incorreta.",
+  "reset_error_math_empty": "Insira o resultado do cálculo.",
 
     "footer_tagline": "Controle de dinheiro simples e local-first.",
     "nav_open_menu": "Abrir menu",
@@ -484,6 +500,10 @@
     "reset_math_label": "計算",
     "reset_button": "すべて削除",
 
+  "reset_error_word": "「RESET」を正確に入力してください。",
+  "reset_error_math": "計算の答えが正しくありません。",
+  "reset_error_math_empty": "計算結果を入力してください。",
+
     "footer_tagline": "シンプルでローカル優先のマネートラッカー。",
     "nav_open_menu": "メニューを開く",
     "nav_close_menu": "メニューを閉じる"
@@ -582,13 +602,15 @@
     "reset_math_label": "Aufgabe",
     "reset_button": "Alles löschen",
 
+  "reset_error_word": "Geben Sie „RESET“ exakt ein.",
+  "reset_error_math": "Das Ergebnis der Aufgabe ist falsch.",
+  "reset_error_math_empty": "Geben Sie das Ergebnis der Aufgabe ein.",
+
     "footer_tagline": "Einfacher, lokal-first Geld-Tracker.",
     "nav_open_menu": "Menü öffnen",
     "nav_close_menu": "Menü schließen"
   },
-
-  "pt": { "__dup__": "merged above" },
-
+ 
   "it": {
     "nav_home": "Home",
     "nav_export": "Esporta",
@@ -681,6 +703,10 @@
     "reset_type_label": "Digita RESET per confermare",
     "reset_math_label": "Calcolo",
     "reset_button": "Elimina tutto",
+
+  "reset_error_word": "Digita “RESET” esattamente.",
+  "reset_error_math": "La risposta del calcolo è errata.",
+  "reset_error_math_empty": "Inserisci il risultato dell’operazione.",
 
     "footer_tagline": "Tracciatore di denaro semplice e locale.",
     "nav_open_menu": "Apri menu",

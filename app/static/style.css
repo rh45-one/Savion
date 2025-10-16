@@ -574,3 +574,11 @@ button.tag-remove[disabled] { opacity: .5; cursor: not-allowed; }
   .edit-actions button { width: 100%; }
   .icon-btn { padding: 8px; } /* larger tap target */
 }
+
+/* Inline field errors (used on Reset form) */
+.field-error {
+  display: block;
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--danger);
+}
