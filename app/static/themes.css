@@ -1,3 +1,13 @@
+/* Bundled theme font (place file at app/static/fonts/AcPlus_IBM_BIOS.ttf) */
+@font-face {
+  font-family: 'AcPlusIBM_BIOS';
+  src: url('/static/fonts/AcPlus_IBM_BIOS.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+
 /* Theme variants live here. The default (dark) stays in style.css as fallback. */
 
 /* ===== Light ===== */
@@ -73,12 +83,27 @@
   --filter-field-bg: #FFFFFF;
 }
 
-/* Typography */
+/* Windows Classic: use bundled BIOS font */
 [data-theme="winclassic"] body {
-  font-family: Tahoma, "Microsoft Sans Serif", Arial, sans-serif;
+  font-family: 'AcPlusIBM_BIOS', Tahoma, "MS Sans Serif", "Microsoft Sans Serif", Arial, sans-serif;
   letter-spacing: 0;
   background: var(--bg);
 }
+[data-theme="winclassic"] button,
+[data-theme="winclassic"] input,
+[data-theme="winclassic"] select,
+[data-theme="winclassic"] textarea,
+[data-theme="winclassic"] .desktop-nav a,
+[data-theme="winclassic"] .mobile-menu a,
+[data-theme="winclassic"] h1,
+[data-theme="winclassic"] h2,
+[data-theme="winclassic"] h3,
+[data-theme="winclassic"] .card,
+[data-theme="winclassic"] .table,
+[data-theme="winclassic"] .alert {
+  font-family: inherit;
+}
+
 
 /* Square everything */
 [data-theme="winclassic"] * {
@@ -250,15 +275,30 @@
   --filter-field-bg: #FFFFFF;
 }
 
-/* Global typography + raster feel (Chicago-style stack) */
+/* Apple System 1: use bundled BIOS font (monochrome look) */
 [data-theme="system1"] body {
-  font-family: "Chicago", "ChicagoFLF", "Geneva", "Charcoal", "Monaco", "Lucida Grande", Arial, sans-serif;
+  font-family: 'AcPlusIBM_BIOS', "Chicago", "ChicagoFLF", "Geneva", "Charcoal", "Monaco", "Lucida Grande", Arial, sans-serif;
   -webkit-font-smoothing: none;
-  -moz-osx-font-smoothing: grayscale; /* closest available */
+  -moz-osx-font-smoothing: grayscale;
   image-rendering: pixelated;
   background: var(--bg);
   color: var(--text);
 }
+[data-theme="system1"] button,
+[data-theme="system1"] input,
+[data-theme="system1"] select,
+[data-theme="system1"] textarea,
+[data-theme="system1"] .desktop-nav a,
+[data-theme="system1"] .mobile-menu a,
+[data-theme="system1"] h1,
+[data-theme="system1"] h2,
+[data-theme="system1"] h3,
+[data-theme="system1"] .card,
+[data-theme="system1"] .table,
+[data-theme="system1"] .alert {
+  font-family: inherit;
+}
+
 
 /* No radii, no shadows, 1px lines */
 [data-theme="system1"] * {
