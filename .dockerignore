@@ -1,10 +1,33 @@
+# VCS & CI
+.git
+.github
+
+# Python artifacts
 __pycache__/
-*.pyc
+*.py[cod]
 *.pyo
 *.pyd
-*.pytest_cache/
-*.log
-.env
-.venv/
-dist/
+*.pdb
+*.egg-info/
+.eggs/
 build/
+dist/
+
+# Envs & configs
+.env
+.venv
+venv/
+
+# OS/editor junk
+.DS_Store
+*.swp
+*.swo
+
+# Logs
+*.log
+
+# Tests (if any)
+tests/
+
+# Node (if ever present)
+node_modules/
