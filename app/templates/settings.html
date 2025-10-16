@@ -5,9 +5,10 @@
 <form action="/settings" method="post" class="card form-grid">
   <label>{{ t.settings_theme }}
     <select name="theme" required>
-      <option value="dark"    {% if settings.theme == 'dark' %}selected{% endif %}>Dark</option>
-      <option value="light"   {% if settings.theme == 'light' %}selected{% endif %}>Light</option>
-      <option value="dracula" {% if settings.theme == 'dracula' %}selected{% endif %}>Dracula</option>
+      <option value="dark"       {% if settings.theme == 'dark' %}selected{% endif %}>Dark</option>
+      <option value="light"      {% if settings.theme == 'light' %}selected{% endif %}>Light</option>
+      <option value="dracula"    {% if settings.theme == 'dracula' %}selected{% endif %}>Dracula</option>
+      <option value="winclassic" {% if settings.theme == 'winclassic' %}selected{% endif %}>Windows Classic</option>
     </select>
   </label>
 

@@ -139,7 +139,7 @@ class Movement(BaseModel):
 class SettingsEntry(BaseModel):
     kind: Literal["settings"]
     timestamp: str
-    theme: Literal["dark","light","dracula"]
+    theme: Literal["dark","light","dracula","winclassic"]
     fade_start: float
     currency: Optional[Literal["EUR","USD","GBP"]] = None
     timezone: Optional[str] = None  # IANA tz
@@ -204,7 +204,7 @@ def get_settings() -> dict:
             data = json.load(f)
         for k, v in DEFAULT_SETTINGS.items():
             data.setdefault(k, v)
-        if data.get("theme") not in ("dark","light","dracula"):
+        if data.get("theme") not in ("dark","light","dracula","winclassic"):
             data["theme"] = DEFAULT_SETTINGS["theme"]
         try:
             data["fade_start"] = float(data.get("fade_start", DEFAULT_SETTINGS["fade_start"]))
@@ -634,7 +634,7 @@ async def settings_get(request: Request):
 @app.post("/settings", response_class=HTMLResponse)
 async def settings_post(
     request: Request,
-    theme: Literal["dark","light","dracula"] = Form(...),
+    theme: Literal["dark","light","dracula","winclassic"] = Form(...),
     fade_start: float = Form(...),
     currency: Literal["EUR","USD","GBP"] = Form(...),
     timezone: str = Form(...),

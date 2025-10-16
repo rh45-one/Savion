@@ -46,3 +46,192 @@
 :root[data-theme="dark"] input[type="date"]::-webkit-calendar-picker-indicator {
   filter: invert(1) brightness(1.2);
 }
+
+/* ===== Windows Classic ===== */
+:root[data-theme="winclassic"] {
+  /* Desktop + window colors */
+  --bg: #008080;            /* teal desktop */
+  --card: #ECE9D8;          /* window background */
+  --soft: #D4D0C8;          /* button face / panel */
+  --text: #000000;
+  --muted: #000000;         /* classic is high-contrast; keep dark text */
+  --border: #000000;        /* 1px black outlines when needed */
+  --primary: #000080;       /* classic navy */
+
+  /* WinClassic specifics */
+  --wc-button-face: #D4D0C8;
+  --wc-highlight: #FFFFFF;  /* top/left bevel */
+  --wc-shadow:   #808080;   /* bottom/right bevel */
+  --wc-window-border-active:   #0A246A;
+  --wc-window-border-inactive: #808080;
+  --wc-title-start: #000080; /* active title bar gradient (left) */
+  --wc-title-end:   #1084D0; /* active title bar gradient (right) */
+  --wc-title-inactive-start: #808080;
+  --wc-title-inactive-end:   #C0C0C0;
+
+  /* Forms in panel */
+  --filter-field-bg: #FFFFFF;
+}
+
+/* Typography */
+[data-theme="winclassic"] body {
+  font-family: Tahoma, "Microsoft Sans Serif", Arial, sans-serif;
+  letter-spacing: 0;
+  background: var(--bg);
+}
+
+/* Square everything */
+[data-theme="winclassic"] * {
+  border-radius: 0 !important;
+}
+
+/* Topbar as a window title bar */
+[data-theme="winclassic"] .topbar {
+  background: linear-gradient(to right, var(--wc-title-start), var(--wc-title-end));
+  color: #fff;
+  border-bottom: 2px solid #000;
+}
+[data-theme="winclassic"] .topbar h1 {
+  font-weight: 700;
+  color: #fff;
+}
+[data-theme="winclassic"] .desktop-nav a {
+  color: #fff;
+}
+[data-theme="winclassic"] .desktop-nav a:hover,
+[data-theme="winclassic"] .mobile-menu a:hover {
+  background: #000080;
+  color: #fff;
+}
+
+/* Mobile menu panel */
+[data-theme="winclassic"] .mobile-menu {
+  background: var(--soft);
+  border-top: 1px solid #000;
+  box-shadow: none;
+}
+
+/* Cards = windows (flat face with black outline) */
+[data-theme="winclassic"] .card {
+  background: var(--card);
+  border: 1px solid #000;
+  box-shadow: none;
+}
+
+/* Group headings mimic classic caption (subtle) */
+[data-theme="winclassic"] .card h3 {
+  margin-top: 0;
+  color: #000;
+}
+
+/* Inputs: white with 1px black border */
+[data-theme="winclassic"] input[type="text"],
+[data-theme="winclassic"] input[type="number"],
+[data-theme="winclassic"] input[type="date"],
+[data-theme="winclassic"] input[type="file"],
+[data-theme="winclassic"] select,
+[data-theme="winclassic"] textarea {
+  background: #fff;
+  color: #000;
+  border: 1px solid #000;
+  box-shadow: none;
+}
+
+/* File button face */
+[data-theme="winclassic"] input[type="file"]::file-selector-button,
+[data-theme="winclassic"] input[type="file"]::-moz-file-upload-button {
+  background: var(--wc-button-face);
+  color: #000;
+  border: 2px solid;
+  border-color: var(--wc-highlight) var(--wc-shadow) var(--wc-shadow) var(--wc-highlight);
+  padding: 2px 8px;
+}
+
+/* Buttons: 3D bevel look */
+[data-theme="winclassic"] button,
+[data-theme="winclassic"] .btn,
+[data-theme="winclassic"] input[type="submit"],
+[data-theme="winclassic"] input[type="button"] {
+  background: var(--wc-button-face);
+  color: #000;
+  border: 2px solid;
+  border-color: var(--wc-highlight) var(--wc-shadow) var(--wc-shadow) var(--wc-highlight); /* tl / tr / br / bl order */
+  padding: 4px 10px;
+  box-shadow: none;
+}
+[data-theme="winclassic"] button:active,
+[data-theme="winclassic"] .btn:active,
+[data-theme="winclassic"] input[type="submit"]:active,
+[data-theme="winclassic"] input[type="button"]:active {
+  border-color: var(--wc-shadow) var(--wc-highlight) var(--wc-highlight) var(--wc-shadow); /* pressed inset */
+}
+[data-theme="winclassic"] button:focus,
+[data-theme="winclassic"] .btn:focus,
+[data-theme="winclassic"] input[type="submit"]:focus,
+[data-theme="winclassic"] input[type="button"]:focus,
+[data-theme="winclassic"] a:focus {
+  outline: 1px dotted #000;
+  outline-offset: -4px;
+}
+
+/* Danger link (Reset) = white on navy when hovered */
+[data-theme="winclassic"] .desktop-nav a.danger:hover {
+  background: #000080;
+  color: #fff;
+}
+
+/* Filters panel: flat with etched border feel */
+[data-theme="winclassic"] details.filter-box {
+  background: var(--soft);
+  border: 1px solid #000;
+}
+[data-theme="winclassic"] details.filter-box > summary {
+  font-weight: 700;
+  color: #000;
+}
+
+/* Table header and rows */
+[data-theme="winclassic"] .table .row.header {
+  background: #D4D0C8;
+  color: #000;
+  border-top: 1px solid #fff;
+  border-bottom: 1px solid #808080;
+}
+[data-theme="winclassic"] .table .row {
+  border-bottom: 1px solid #C0C0C0;
+}
+[data-theme="winclassic"] .table .cell {
+  color: #000;
+}
+
+/* Alerts (errors) = menu highlight style */
+[data-theme="winclassic"] .alert {
+  background: #000080;
+  color: #fff;
+  border: 1px solid #000;
+}
+
+/* Footer link color */
+[data-theme="winclassic"] .repo-link { color: #000; }
+[data-theme="winclassic"] .repo-link:hover { color: #000080; }
+
+/* Hamburger button uses classic bevel */
+[data-theme="winclassic"] .hamburger {
+  background: var(--wc-button-face);
+  color: #000;
+  border: 2px solid;
+  border-color: var(--wc-highlight) var(--wc-shadow) var(--wc-shadow) var(--wc-highlight);
+}
+[data-theme="winclassic"] .hamburger:active {
+  border-color: var(--wc-shadow) var(--wc-highlight) var(--wc-highlight) var(--wc-shadow);
+}
+
+/* Ensure form controls/buttons have classic minimal height */
+[data-theme="winclassic"] input,
+[data-theme="winclassic"] select,
+[data-theme="winclassic"] button {
+  min-height: 28px;
+}
+
+/* Links default to classic blue */
+[data-theme="winclassic"] a { color: #000080; }
