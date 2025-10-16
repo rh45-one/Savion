@@ -2,6 +2,7 @@
 :root {
   --bg: #0b0d10;
   --panel: #12161b;
+  --card: var(--panel);
   --soft: #1b222b;
   --text: #e6edf3;
   --muted: #a1a7ae;
@@ -13,6 +14,7 @@
 :root[data-theme="light"] {
   --bg: #f7f9fb;
   --panel: #ffffff;
+  --card: var(--panel);
   --soft: #f1f4f8;
   --text: #0a0f14;
   --muted: #586071;
@@ -25,6 +27,7 @@
 :root[data-theme="dracula"] {
   --bg: #282a36;        /* background */
   --panel: #1f2130;     /* slightly darker than main to separate panels */
+  --card: var(--panel);
   --soft: #3a3d4e;      /* current-line-ish */
   --text: #f8f8f2;      /* foreground */
   --muted: #6272a4;     /* comments */
@@ -36,7 +39,13 @@
 
 /* BASE */
 * { box-sizing: border-box; }
-html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Helvetica Neue,Arial,Noto Sans,Apple Color Emoji,Segoe UI Emoji; }
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+}
 .container { max-width: 960px; margin: 0 auto; padding: 16px; overflow-x: hidden; }
 
 /* Topbar */
@@ -51,21 +60,37 @@ html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); f
 .desktop-nav a.danger { color: var(--danger); }
 
 /* Mobile menu button (uses inline SVG in base.html) */
-.hamburger { display: none !important; background: transparent; border: 0; padding: 8px; border-radius: 8px; color: var(--text); }
+.hamburger {
+  display: none !important;
+  background: transparent;
+  border: 0;
+  padding: 8px;
+  border-radius: 8px;
+  color: var(--text);
+}
 .hamburger:focus-visible { outline: 2px solid var(--accent); }
 .hamburger .icon { display: block; width: 24px; height: 24px; fill: currentColor; }
 
 /* Mobile dropdown menu */
-.mobile-menu { 
-  display: none; 
-  position: absolute; 
-  left: 0; right: 0; top: 100%; 
-  background: var(--panel); 
-  border-bottom: 1px solid var(--border); 
+.mobile-menu {
+  display: none;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
   box-shadow: 0 12px 24px rgba(0,0,0,0.35);
   z-index: 100;
 }
-.mobile-menu a { display: block; padding: 14px 16px; color: var(--text); text-decoration: none; border-top: 1px solid var(--border); line-height: 1.3; }
+.mobile-menu a {
+  display: block;
+  padding: 14px 16px;
+  color: var(--text);
+  text-decoration: none;
+  border-top: 1px solid var(--border);
+  line-height: 1.3;
+}
 .mobile-menu a:first-child { border-top: 0; }
 .mobile-menu a.danger { color: var(--danger); }
 .mobile-menu:not([hidden]) { display: block; }
@@ -88,18 +113,45 @@ html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); f
 .footer .container { padding: 16px; }
 
 /* Alerts */
-.alert { background: #2b333d; color: #ffd2d2; border: 1px solid #4a2222; padding: 12px; border-radius: 8px; margin-bottom: 16px; }
+.alert {
+  background: #2b333d;
+  color: #ffd2d2;
+  border: 1px solid #4a2222;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
 :root[data-theme="light"] .alert { background: #fff4f4; color: #7a1f1f; border-color: #f2c9c9; }
 :root[data-theme="dracula"] .alert { background: #343746; color: #ffbcbc; border-color: #5b2d2d; }
 
 /* Cards & Forms */
-.card { background: var(--panel); border: 1px solid var(--border); padding: 16px; border-radius: 12px; box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+.card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  padding: 16px;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+}
 .card.danger-card { border-color: #3a1e1e; }
 label { display: block; margin-bottom: 12px; font-size: 14px; color: var(--muted); }
 input[type="text"], input[type="number"], select, input[type="file"] {
-  width: 100%; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--border); background: var(--soft); color: var(--text);
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--soft);
+  color: var(--text);
 }
-button { background: var(--accent); color: #fff; border: 0; padding: 12px 16px; border-radius: 12px; cursor: pointer; font-weight: 700; min-height: 44px; }
+button {
+  background: var(--accent);
+  color: #fff;
+  border: 0;
+  padding: 12px 16px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 700;
+  min-height: 44px;
+}
 button.danger { background: var(--danger); }
 
 /* Forms grid */
@@ -136,25 +188,15 @@ input, select { min-height: 44px; }
 .desktop-nav a { min-height: 40px; }
 
 /* Vertical spacing between stacked cards on normal pages (Home/Settings) */
-main > .card + .card {
-  margin-top: 16px;
-}
-@media (min-width: 700px) {
-  main > .card + .card {
-    margin-top: 20px;
-  }
-}
+main > .card + .card { margin-top: 16px; }
+@media (min-width: 700px) { main > .card + .card { margin-top: 20px; } }
 
 
 details.filter-box { border: 1px solid var(--border); border-radius: 12px; padding: 8px 12px; background: var(--soft); }
 details.filter-box > summary { cursor: pointer; font-weight: 600; }
 
 /* === Filter panel field contrast overrides === */
-details.filter-box input[type="text"],
-details.filter-box input[type="number"],
-details.filter-box input[type="date"],
-details.filter-box select,
-details.filter-box textarea {
+details.filter-box input[type="text"], details.filter-box input[type="number"], details.filter-box input[type="date"], details.filter-box select, details.filter-box textarea {
   /* Use a dedicated var so it's visibly different from the panel bg */
   background: var(--filter-field-bg, #ffffff);
   border-color: var(--border);
@@ -162,28 +204,16 @@ details.filter-box textarea {
   transition: background-color .18s ease, border-color .18s ease, box-shadow .18s ease;
 }
 
-details.filter-box input[type="text"]::placeholder,
-details.filter-box input[type="number"]::placeholder,
-details.filter-box textarea::placeholder {
-  color: var(--muted);
-}
+details.filter-box input[type="text"]::placeholder, details.filter-box input[type="number"]::placeholder, details.filter-box textarea::placeholder { color: var(--muted); }
 
 /* Theme-specific field backgrounds so boxes pop against the panel */
-:root[data-theme="light"] {
-  --filter-field-bg: #ffffff; /* crisp white on light */
-}
-:root[data-theme="dark"] {
-  --filter-field-bg: rgba(255, 255, 255, 0.06); /* subtle contrast on dark */
-}
-:root[data-theme="dracula"] {
-  --filter-field-bg: rgba(255, 255, 255, 0.08); /* slightly brighter for Dracula */
-}
+:root[data-theme="light"] { --filter-field-bg: #ffffff; }
+:root[data-theme="dark"] { --filter-field-bg: rgba(255, 255, 255, 0.06); }
+:root[data-theme="dracula"] { --filter-field-bg: rgba(255, 255, 255, 0.08); }
 
 /* Optional: keep the date picker icon visible on dark themes inside panel */
 :root[data-theme="dark"] details.filter-box input[type="date"]::-webkit-calendar-picker-indicator,
-:root[data-theme="dracula"] details.filter-box input[type="date"]::-webkit-calendar-picker-indicator {
-  filter: invert(1) brightness(1.2);
-}
+:root[data-theme="dracula"] details.filter-box input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(1) brightness(1.2); }
 
 /* === Setup page: two equal-height cards in a responsive grid === */
 .setup-grid {
@@ -308,21 +338,11 @@ select {
 }
 
 /* === Tags === */
-.tag-picker .label,
-.tag-filter .label { font-weight: 600; margin-bottom: 6px; color: var(--text); }
+.tag-picker .label, .tag-filter .label { font-weight: 600; margin-bottom: 6px; color: var(--text); }
 
-.tag-options {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
+.tag-options { display: flex; flex-wrap: wrap; gap: 8px; }
 
-.tag-option {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 2px 0;
-}
+.tag-option { display: inline-flex; align-items: center; gap: 6px; padding: 2px 0; }
 
 .tag-chip {
   display: inline-block;
@@ -330,7 +350,7 @@ select {
   border-radius: 999px;
   line-height: 1;
   font-size: 12px;
-  color: #fff; /* works for most colors; overriding text for contrast simplicity */
+  color: #fff;
   white-space: nowrap;
 }
 
@@ -338,64 +358,25 @@ select {
 
 /* Make tags wrap nicely in the table on mobile */
 @media (max-width: 700px) {
-  .table .cell[data-label="{{ t.table_tags if t else 'Tags' }}"] .tag-list { /* best-effort: Jinja at build */
-    gap: 6px;
-  }
+  .table .cell[data-label="{{ t.table_tags if t else 'Tags' }}"] .tag-list { gap: 6px; }
 }
 
-/* === Tag editor (Settings) === */
+/* === Tag editor (Settings) consolidated === */
 .tag-editor {
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 12px;
   background: var(--card);
+  max-width: 760px; /* keep it from getting too wide within the card */
 }
 
-.tag-rows {
-  display: grid;
-  gap: 10px;
-}
+.tag-rows { display: grid; gap: 12px; }
 
-.tag-row {
-  display: grid;
-  grid-template-columns: 1fr auto auto;
-  gap: 10px;
-  align-items: end;
-}
-
-.tag-row .tag-remove {
-  align-self: center;
-}
+.tag-row { display: grid; grid-template-columns: minmax(220px, 1fr) 120px auto; gap: 12px; align-items: end; }
 
 @media (max-width: 600px) {
   .tag-row { grid-template-columns: 1fr 1fr; }
   .tag-row .tag-remove { grid-column: 1 / -1; justify-self: start; }
-}
-
-/* === Tag editor layout (Settings) === */
-.tag-editor {
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 12px;
-  background: var(--card);
-  /* keep it from getting too wide within the card */
-  max-width: 760px;
-}
-
-.tag-rows {
-  display: grid;
-  gap: 12px; /* uniform separation between rows */
-}
-
-/* Each tag row uses a tidy grid:
-   - Name expands
-   - Color is compact
-   - Remove button aligns neatly to the right */
-.tag-row {
-  display: grid;
-  grid-template-columns: minmax(220px, 1fr) 120px auto;
-  gap: 12px; /* uniform separation between columns */
-  align-items: end;
 }
 
 .tag-col {
