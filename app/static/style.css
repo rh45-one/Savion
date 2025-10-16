@@ -513,3 +513,64 @@ button.tag-remove[disabled] { opacity: .5; cursor: not-allowed; }
   width: 1px; height: 1px;
   padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0;
 }
+
+/* === Inline edit in Recent Movements (visibility & responsiveness) === */
+
+/* Never render an edit form unless explicitly opened */
+.edit-form[hidden] { display: none !important; }
+
+/* Keep the description line and pencil aligned */
+.desc-line {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+/* Hide plain text while editing to avoid duplicate content */
+.cell.editing .desc-text { display: none; }
+
+/* Icon button */
+.icon-16 { width: 16px; height: 16px; }
+.icon-btn {
+  background: transparent;
+  border: 0;
+  padding: 6px;
+  margin-left: 6px;
+  color: var(--muted);
+  border-radius: 8px;
+  vertical-align: middle;
+}
+.icon-btn:hover { color: var(--text); background: var(--soft); }
+.icon-btn:focus-visible { outline: 2px solid var(--accent); }
+
+/* Editor container */
+.edit-form {
+  margin-top: 8px;
+  background: var(--soft);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+.edit-form input[type="text"] {
+  background: var(--card);
+  min-width: 0;
+}
+
+/* Action row */
+.edit-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+.edit-actions button { min-width: 96px; }
+
+/* Mobile optimizations: full-width actions for easier tapping */
+@media (max-width: 600px) {
+  .edit-actions { flex-direction: column; }
+  .edit-actions button { width: 100%; }
+  .icon-btn { padding: 8px; } /* larger tap target */
+}

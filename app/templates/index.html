@@ -121,15 +121,17 @@
 
         <!-- Description + inline edit -->
         <div class="cell" data-label="{{ t.table_description }}">
-          <span class="desc-text">{{ r.description }}</span>
-          <button class="icon-btn edit-btn" type="button" data-target="{{ r.ts_raw }}" aria-label="{{ t.edit }}">
-            <svg viewBox="0 0 24 24" class="icon-16" aria-hidden="true">
-              <path fill="currentColor" d="M20.71,7.04l-3.75-3.75c-0.39-0.39-1.02-0.39-1.41,0l-9.5,9.5c-0.09,0.09-0.16,0.2-0.21,0.33l-1.5,4.5c-0.17,0.51,0.3,0.98,0.81,0.81l4.5-1.5c0.12-0.04,0.23-0.11,0.33-0.21l9.5-9.5C21.1,8.06,21.1,7.43,20.71,7.04zM7.04,17l-2.12,0.71L5.63,15.6L7.04,17zM8.46,16.29l-0.75-0.75L16.5,6.75l0.75,0.75L8.46,16.29z"/>
-            </svg>
-          </button>
+          <span class="desc-line">
+            <span class="desc-text">{{ r.description }}</span>
+            <button class="icon-btn edit-btn" type="button" data-target="{{ r.ts_raw }}" aria-label="{{ t.edit }}" aria-expanded="false">
+              <svg viewBox="0 0 24 24" class="icon-16" aria-hidden="true">
+                <path fill="currentColor" d="M20.71,7.04l-3.75-3.75c-0.39-0.39-1.02-0.39-1.41,0l-9.5,9.5c-0.09,0.09-0.16,0.2-0.21,0.33l-1.5,4.5c-0.17,0.51,0.3,0.98,0.81,0.81l4.5-1.5c0.12-0.04,0.23-0.11,0.33-0.21l9.5-9.5C21.1,8.06,21.1,7.43,20.71,7.04zM7.04,17l-2.12,0.71L5.63,15.6L7.04,17zM8.46,16.29l-0.75-0.75L16.5,6.75l0.75,0.75L8.46,16.29z"/>
+              </svg>
+            </button>
+          </span>
 
-          <!-- Inline edit form (hidden until pencil clicked) -->
-          <form class="edit-form" action="/movement/edit" method="post" hidden>
+          <!-- Inline edit form (always rendered, enforced hidden by default) -->
+          <form class="edit-form" action="/movement/edit" method="post" hidden aria-hidden="true">
             <input type="hidden" name="target_ts" value="{{ r.ts_raw }}">
             <label class="sr-only">{{ t.edit_description }}</label>
             <input type="text" name="new_description" value="{{ r.description }}" placeholder="{{ t.edit_description }}">
@@ -172,37 +174,87 @@
 </section>
 
 <script>
-  // Inline edit toggle handlers
+  // Inline edit toggle: keep editors hidden unless pencil is clicked
   (function () {
-    function closestCell(node) {
-      return node.closest('.cell');
+    function closestCell(node) { return node.closest('.cell'); }
+    function getForm(cell) { return cell ? cell.querySelector('.edit-form') : null; }
+    function getButton(cell) { return cell ? cell.querySelector('.edit-btn') : null; }
+
+    function openForm(cell) {
+      var form = getForm(cell), btn = getButton(cell);
+      if (!form || !btn) return;
+      // Close others first
+      document.querySelectorAll('.edit-form:not([hidden])').forEach(function (f) {
+        f.hidden = true;
+        f.setAttribute('aria-hidden', 'true');
+        var c = f.closest('.cell');
+        if (c) c.classList.remove('editing');
+        var b = c ? getButton(c) : null;
+        if (b) b.setAttribute('aria-expanded', 'false');
+      });
+      form.hidden = false;
+      form.setAttribute('aria-hidden', 'false');
+      cell.classList.add('editing');
+      btn.setAttribute('aria-expanded', 'true');
+      var input = form.querySelector('input[type="text"]');
+      if (input) { input.focus(); try { input.select(); } catch(e){} }
     }
+
+    function closeForm(cell) {
+      var form = getForm(cell), btn = getButton(cell);
+      if (!form || !btn) return;
+      form.hidden = true;
+      form.setAttribute('aria-hidden', 'true');
+      cell.classList.remove('editing');
+      btn.setAttribute('aria-expanded', 'false');
+    }
+
+    // Ensure all forms are hidden on load
+    document.querySelectorAll('.edit-form').forEach(function (f) {
+      f.hidden = true;
+      f.setAttribute('aria-hidden', 'true');
+    });
+
+    // Toggle via pencil icon
     document.querySelectorAll('.edit-btn').forEach(function (btn) {
       btn.addEventListener('click', function () {
         var cell = closestCell(btn);
         if (!cell) return;
-        var form = cell.querySelector('.edit-form');
+        var form = getForm(cell);
         if (!form) return;
-        form.hidden = !form.hidden;
-        if (!form.hidden) {
-          var input = form.querySelector('input[type="text"]');
-          if (input) { input.focus(); input.select(); }
-        }
+        if (form.hidden) openForm(cell);
+        else closeForm(cell);
       });
     });
+
+    // Cancel button inside form
     document.querySelectorAll('.cancel-edit').forEach(function (btn) {
       btn.addEventListener('click', function () {
         var form = btn.closest('.edit-form');
-        if (form) form.hidden = true;
+        var cell = form ? form.closest('.cell') : null;
+        if (cell) closeForm(cell);
       });
     });
-    // Close any open editor if clicking outside
+
+    // ESC closes the active editor
+    document.addEventListener('keydown', function (e) {
+      if (e.key !== 'Escape') return;
+      var open = document.querySelector('.edit-form:not([hidden])');
+      if (open) {
+        var cell = open.closest('.cell');
+        if (cell) closeForm(cell);
+      }
+    });
+
+    // Click outside closes any open editor
     document.addEventListener('click', function (e) {
       var openForms = document.querySelectorAll('.edit-form:not([hidden])');
       openForms.forEach(function (f) {
-        if (!f.contains(e.target) && !f.previousElementSibling.contains(e.target)) {
-          f.hidden = true;
-        }
+        var cell = f.closest('.cell');
+        if (!cell) return;
+        var btn = getButton(cell);
+        var within = e.target.closest('.edit-form, .edit-btn');
+        if (!within) closeForm(cell);
       });
     });
   })();
