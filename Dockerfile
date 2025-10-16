@@ -1,4 +1,4 @@
-# Base: preferred + recent to reduce CVEs
+# Recent, small base lowers CVEs
 FROM python:3.14-alpine3.22
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -8,25 +8,22 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     UVICORN_HOST=0.0.0.0 \
     UVICORN_PORT=8000
 
-# Minimal runtime deps
+# Only what we truly need at runtime
 RUN apk add --no-cache tzdata ca-certificates
 
-# Non-root user + writable /data
+# Non-root user + writable /data for persistence
 RUN addgroup -S app && adduser -S app -G app && \
     mkdir -p /opt/savion /data && chown -R app:app /opt/savion /data
 
 WORKDIR /opt/savion
 
-# Copy the whole project once (respects .dockerignore)
-COPY . .
-
-# Install deps if a requirements file exists; otherwise install minimal runtime deps
+# Install deps first (better cache) — no compiled extras
+COPY requirements.txt .
 RUN python -m pip install --upgrade pip && \
-    if [ -f requirements.txt ]; then \
-        pip install -r requirements.txt; \
-    else \
-        pip install fastapi "uvicorn[standard]" jinja2; \
-    fi
+    pip install --no-cache-dir -r requirements.txt
+
+# Then copy the app (respects .dockerignore)
+COPY . .
 
 USER app
 EXPOSE 8000
