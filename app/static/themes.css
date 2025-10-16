@@ -235,3 +235,146 @@
 
 /* Links default to classic blue */
 [data-theme="winclassic"] a { color: #000080; }
+
+/* ===== Apple System 1 (monochrome, 1-bit look) ===== */
+:root[data-theme="system1"] {
+  /* Only black & white */
+  --bg: #FFFFFF;
+  --card: #FFFFFF;
+  --soft: #FFFFFF;
+  --text: #000000;
+  --muted: #000000;   /* still black; hierarchy comes from lines */
+  --border: #000000;
+  --primary: #000000;
+
+  --filter-field-bg: #FFFFFF;
+}
+
+/* Global typography + raster feel (Chicago-style stack) */
+[data-theme="system1"] body {
+  font-family: "Chicago", "ChicagoFLF", "Geneva", "Charcoal", "Monaco", "Lucida Grande", Arial, sans-serif;
+  -webkit-font-smoothing: none;
+  -moz-osx-font-smoothing: grayscale; /* closest available */
+  image-rendering: pixelated;
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* No radii, no shadows, 1px lines */
+[data-theme="system1"] * {
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+/* Top menu bar (System 1 menubar style): white bg, black text */
+[data-theme="system1"] .topbar {
+  background: #FFFFFF;
+  color: #000;
+  border-bottom: 1px solid #000;
+}
+[data-theme="system1"] .desktop-nav a,
+[data-theme="system1"] .mobile-menu a {
+  color: #000;
+}
+[data-theme="system1"] .mobile-menu {
+  background: #FFFFFF;
+  border-top: 1px solid #000;
+}
+
+/* Window cards: 1px black border; title bar = solid black strip with white, centered, uppercase text */
+[data-theme="system1"] .card {
+  background: #FFFFFF;
+  border: 1px solid #000;
+}
+[data-theme="system1"] .card h3 {
+  background: #000;
+  color: #fff;
+  text-transform: uppercase;
+  text-align: center;
+  padding: 4px 6px;
+  margin: 0 0 10px 0 !important;
+  font-weight: 700;
+  letter-spacing: 0.5px; /* mimic bitmap caps spacing */
+}
+
+/* Inputs: white fill, 1px black border; focus = dotted rectangle */
+[data-theme="system1"] input[type="text"],
+[data-theme="system1"] input[type="number"],
+[data-theme="system1"] input[type="date"],
+[data-theme="system1"] input[type="file"],
+[data-theme="system1"] select,
+[data-theme="system1"] textarea {
+  background: #FFFFFF;
+  color: #000;
+  border: 1px solid #000;
+}
+[data-theme="system1"] input:focus,
+[data-theme="system1"] select:focus,
+[data-theme="system1"] textarea:focus {
+  outline: 1px dotted #000;
+  outline-offset: -3px;
+}
+
+/* Buttons: outlined; pressed state = inverted colors */
+[data-theme="system1"] button,
+[data-theme="system1"] .btn,
+[data-theme="system1"] input[type="submit"],
+[data-theme="system1"] input[type="button"] {
+  background: #FFFFFF;
+  color: #000;
+  border: 1px solid #000;
+  padding: 4px 10px;
+}
+[data-theme="system1"] button:active,
+[data-theme="system1"] .btn:active,
+[data-theme="system1"] input[type="submit"]:active,
+[data-theme="system1"] input[type="button"]:active {
+  background: #000;
+  color: #fff;
+}
+
+/* Filters panel: simple box with 1px border */
+[data-theme="system1"] details.filter-box {
+  background: #FFFFFF;
+  border: 1px solid #000;
+}
+[data-theme="system1"] details.filter-box > summary {
+  color: #000;
+  font-weight: 700;
+}
+
+/* Tables: crisp 1px grid; header = inverted black bar */
+[data-theme="system1"] .table .row.header {
+  background: #000;
+  color: #fff;
+  border-top: 1px solid #000;
+  border-bottom: 1px solid #000;
+}
+[data-theme="system1"] .table .row {
+  border-bottom: 1px solid #000;
+}
+[data-theme="system1"] .table .cell { color: #000; }
+
+/* Alerts: inverted bar */
+[data-theme="system1"] .alert {
+  background: #000;
+  color: #fff;
+  border: 1px solid #000;
+}
+
+/* Footer link and icons constrained to black */
+[data-theme="system1"] .repo-link { color: #000; }
+[data-theme="system1"] .repo-link:hover { color: #000; }
+[data-theme="system1"] .icon-20,
+[data-theme="system1"] .icon { color: #000; fill: #000; }
+
+/* Hamburger button becomes a simple outlined square */
+[data-theme="system1"] .hamburger {
+  background: #FFFFFF;
+  color: #000;
+  border: 1px solid #000;
+}
+[data-theme="system1"] .hamburger:active { background: #000; color: #fff; }
+
+/* Date picker icon stays visible on white */
+[data-theme="system1"] input[type="date"]::-webkit-calendar-picker-indicator { filter: none; }
