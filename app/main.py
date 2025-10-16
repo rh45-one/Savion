@@ -5,9 +5,10 @@ from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 from typing import Optional, List, Literal, Dict, Any
 from zoneinfo import ZoneInfo
-import os, json, datetime, threading, random
+import os, json, datetime, threading, random, re
 
 APP_NAME = "Savion"
+BASE_DIR = os.path.dirname(__file__)
 DATA_DIR = os.environ.get("DATA_DIR", "/data")
 LEDGER_PATH = os.path.join(DATA_DIR, "ledger.jsonl")
 SETTINGS_PATH = os.path.join(DATA_DIR, "settings.json")
@@ -16,7 +17,7 @@ os.makedirs(DATA_DIR, exist_ok=True)
 # --- Supported languages ---
 SUPPORTED_LANGS = ("en", "es", "fr", "zh", "pt", "ja", "de", "it")
 
-# --- Embedded English translations (fallback) ---
+# --- English translations (fallback) ---
 EN_TRANSLATIONS: Dict[str, str] = {
     "nav_home": "Home",
     "nav_export": "Export",
@@ -30,12 +31,14 @@ EN_TRANSLATIONS: Dict[str, str] = {
     "form_amount": "Amount",
     "form_description_optional": "Description (optional)",
     "form_submit": "Submit",
+    "form_tags": "Tags",
     "section_recent": "Recent Movements",
     "table_date": "Date",
     "table_action": "Action",
     "table_amount": "Amount",
     "table_balance": "Balance",
     "table_description": "Description",
+    "table_tags": "Tags",
     "table_empty": "No movements yet.",
     "settings_title": "Settings",
     "settings_theme": "Theme",
@@ -75,10 +78,18 @@ EN_TRANSLATIONS: Dict[str, str] = {
     "filters_amount_max": "Max amount",
     "filters_apply": "Apply",
     "filters_clear": "Clear",
+    "filters_tags": "Tags",
+    # Tags management
+    "settings_tags_group": "Tag types",
+    "settings_tags_help": "Add/remove tags to use on movements. Pick a color for each.",
+    "settings_tag_name": "Name",
+    "settings_tag_color": "Color",
+    "settings_add_tag": "Add tag type",
+    "settings_remove": "Remove",
 }
 
 # External translations (non-English)
-TRANSLATIONS_PATH = os.path.join(os.path.dirname(__file__), "translations.json")
+TRANSLATIONS_PATH = os.path.join(BASE_DIR, "translations.json")
 _EXTERNAL_TRANSLATIONS: Dict[str, Dict[str, str]] = {}
 
 def _load_external_translations() -> Dict[str, Dict[str, str]]:
@@ -94,34 +105,30 @@ def _load_external_translations() -> Dict[str, Dict[str, str]]:
     except Exception:
         pass
     return {}
-
 _EXTERNAL_TRANSLATIONS = _load_external_translations()
 
 def t_for(lang: str) -> Dict[str, str]:
-    """Merge external bundle (if any) over English fallback."""
     lang = (lang or "en").lower()
-    if lang == "en":
-        return EN_TRANSLATIONS
+    if lang == "en": return EN_TRANSLATIONS
     bundle = _EXTERNAL_TRANSLATIONS.get(lang)
-    if not bundle:
-        return EN_TRANSLATIONS
+    if not bundle: return EN_TRANSLATIONS
     merged = EN_TRANSLATIONS.copy()
     merged.update(bundle)
     return merged
 
-# --- Default settings ---
+# --- Default settings (extended with tag types) ---
 DEFAULT_SETTINGS = {
-    "theme": "dark",        # "dark" | "light" | "dracula"
-    "fade_start": 1000.0,   # where green starts to fade to red
-    "currency": "EUR",      # "EUR" | "USD" | "GBP"
-    "timezone": "Europe/Madrid",  # IANA tz for display + new log timestamps
-    "language": "en"        # see SUPPORTED_LANGS
+    "theme": "dark",            # "dark" | "light" | "dracula" | "winclassic" | "system1"
+    "fade_start": 1000.0,
+    "currency": "EUR",
+    "timezone": "Europe/Madrid",
+    "language": "en",
+    "tag_types": []             # list of {"name": str, "color": "#RRGGBB"}
 }
 
 app = FastAPI(title=APP_NAME)
-app.mount("/static", StaticFiles(directory=os.path.join(os.path.dirname(__file__), "static")), name="static")
-templates = Jinja2Templates(directory=os.path.join(os.path.dirname(__file__), "templates"))
-
+app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR, "static")), name="static")
+templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "templates"))
 write_lock = threading.Lock()
 
 # --- Data models ---
@@ -135,6 +142,7 @@ class Movement(BaseModel):
     delta: Optional[float] = None
     description: Optional[str] = None
     resulting_balance: Optional[float] = None
+    tags: Optional[List[str]] = None
 
 class SettingsEntry(BaseModel):
     kind: Literal["settings"]
@@ -142,8 +150,9 @@ class SettingsEntry(BaseModel):
     theme: Literal["dark","light","dracula","winclassic","system1"]
     fade_start: float
     currency: Optional[Literal["EUR","USD","GBP"]] = None
-    timezone: Optional[str] = None  # IANA tz
+    timezone: Optional[str] = None
     language: Optional[Literal["en","es","fr","zh","pt","ja","de","it"]] = None
+    tag_types: Optional[List[Dict[str, Any]]] = None
 
 # --- Helpers ---
 def validate_timezone(tz: Optional[str]) -> str:
@@ -192,6 +201,27 @@ def format_now_preview(tz_name: str) -> str:
     dt = datetime.datetime.now(tz=tz)
     return dt.strftime("%d/%m/%Y %H:%M")
 
+HEX_RE = re.compile(r"^#([0-9A-Fa-f]{6})$")
+
+def clean_tag_types(tt: Any) -> List[Dict[str, str]]:
+    out: List[Dict[str, str]] = []
+    if not isinstance(tt, list):
+        return out
+    seen = set()
+    for item in tt:
+        name = str(item.get("name", "")).strip()
+        color = str(item.get("color", "")).strip()
+        if not name:
+            continue
+        if not HEX_RE.match(color):
+            color = "#777777"
+        key = name.lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append({"name": name, "color": color})
+    return out
+
 def is_initialized() -> bool:
     return os.path.exists(LEDGER_PATH) and os.path.getsize(LEDGER_PATH) > 0
 
@@ -216,6 +246,7 @@ def get_settings() -> dict:
             data["currency"] = DEFAULT_SETTINGS["currency"]
         data["timezone"] = validate_timezone(data.get("timezone"))
         data["language"] = validate_language(data.get("language"))
+        data["tag_types"] = clean_tag_types(data.get("tag_types", []))
         return data
     except Exception:
         return DEFAULT_SETTINGS.copy()
@@ -233,7 +264,8 @@ def append_settings_to_ledger(s: dict):
         fade_start=float(s.get("fade_start", DEFAULT_SETTINGS["fade_start"])),
         currency=s.get("currency", DEFAULT_SETTINGS["currency"]),
         timezone=s.get("timezone", DEFAULT_SETTINGS["timezone"]),
-        language=s.get("language", DEFAULT_SETTINGS["language"])
+        language=s.get("language", DEFAULT_SETTINGS["language"]),
+        tag_types=s.get("tag_types", []),
     )
     with write_lock:
         with open(LEDGER_PATH, "a", encoding="utf-8") as f:
@@ -320,6 +352,7 @@ async def index(request: Request):
     tz_name = settings["timezone"]
     balance_display = format_currency(balance, currency)
 
+    # Filters
     qp = request.query_params
     q = (qp.get("q") or "").strip()
     action_filter = (qp.get("action") or "all").lower()
@@ -327,9 +360,11 @@ async def index(request: Request):
     end_str = (qp.get("end") or "").strip()
     min_str = (qp.get("min") or "").strip()
     max_str = (qp.get("max") or "").strip()
+    selected_tags = qp.getlist("tags")
+    selected_tags = [s for s in (selected_tags or []) if s.strip()]
+    filters_open = any([q, action_filter in ("add", "withdraw"), start_str, end_str, min_str, max_str, selected_tags])
 
-    filters_open = any([q, action_filter in ("add", "withdraw"), start_str, end_str, min_str, max_str])
-
+    # Parse filters
     start_date = end_date = None
     try:
         if start_str: start_date = datetime.date.fromisoformat(start_str)
@@ -346,6 +381,9 @@ async def index(request: Request):
         if max_str: max_amount = float(max_str)
     except Exception:
         pass
+
+    tag_types = settings.get("tag_types", [])
+    tag_color_map = { (t["name"] or "").strip().lower(): t.get("color", "#777777") for t in tag_types }
 
     movements_src = [r for r in rows if r.kind == "movement"]
 
@@ -365,8 +403,13 @@ async def index(request: Request):
         if max_amount is not None and m_amt > max_amount: return False
         if q:
             ql = q.lower()
-            hay = f"{m.description or ''} {m.action or ''} {format_display_date(m.timestamp, tz_name)}".lower()
+            hay = f"{m.description or ''} {m.action or ''} {format_display_date(m.timestamp, tz_name)} {' '.join(m.tags or [])}".lower()
             if ql not in hay: return False
+        if selected_tags:
+            mtags = [s.lower() for s in (m.tags or [])]
+            # ANY of selected tags:
+            if not any(tag.lower() in mtags for tag in selected_tags):
+                return False
         return True
 
     filtered = [m for m in movements_src if passes_filters(m)]
@@ -375,12 +418,18 @@ async def index(request: Request):
     movements = []
     for r in filtered[:200]:
         action_label = t["action_add"] if r.action == "add" else t["action_withdraw"]
+        tags_display = []
+        for tag in (r.tags or []):
+            key = (tag or "").strip().lower()
+            color = tag_color_map.get(key, "#777777")
+            tags_display.append({"name": tag, "color": color})
         movements.append({
             "timestamp_display": format_display_date(r.timestamp, tz_name),
             "action_display": action_label,
             "amount_display": format_currency(float(r.amount or 0.0), currency),
             "balance_display": format_currency(float(r.resulting_balance or 0.0), currency),
-            "description": r.description or ""
+            "description": r.description or "",
+            "tags": tags_display
         })
 
     return templates.TemplateResponse("index.html", {
@@ -399,6 +448,8 @@ async def index(request: Request):
         "min_str": min_str,
         "max_str": max_str,
         "filters_open": filters_open,
+        "tag_types": tag_types,
+        "selected_tags": selected_tags,
     })
 
 @app.get("/setup", response_class=HTMLResponse)
@@ -430,26 +481,23 @@ async def setup_post(
     lang = settings["language"]
     t = t_for(lang)
 
+    def render_error(msg: str, status_code: int = 400):
+        return templates.TemplateResponse("setup.html", {
+            "request": request,
+            "error": msg,
+            "app_name": APP_NAME,
+            "theme": settings["theme"],
+            "t": t, "lang": lang
+        }, status_code=status_code)
+
     if setup_mode == "import":
         if not ledger_file:
-            return templates.TemplateResponse("setup.html", {
-                "request": request,
-                "error": t["error_file_required"],
-                "app_name": APP_NAME,
-                "theme": settings["theme"],
-                "t": t, "lang": lang
-            }, status_code=400)
+            return render_error(t["error_file_required"])
         content = await ledger_file.read()
         text = content.decode("utf-8", errors="ignore")
         lines = [ln.strip() for ln in text.splitlines() if ln.strip()]
         if not lines:
-            return templates.TemplateResponse("setup.html", {
-                "request": request,
-                "error": t["error_file_empty"],
-                "app_name": APP_NAME,
-                "theme": settings["theme"],
-                "t": t, "lang": lang
-            }, status_code=400)
+            return render_error(t["error_file_empty"])
 
         parsed_any = False
         imported_settings: Optional[Dict[str, Any]] = None
@@ -467,7 +515,8 @@ async def setup_post(
                                     "fade_start": float(se.fade_start),
                                     "currency": (se.currency or DEFAULT_SETTINGS["currency"]),
                                     "timezone": validate_timezone(se.timezone),
-                                    "language": validate_language(se.language)
+                                    "language": validate_language(se.language),
+                                    "tag_types": clean_tag_types(se.tag_types or [])
                                 }
                             except Exception:
                                 pass
@@ -478,32 +527,21 @@ async def setup_post(
                     except Exception:
                         pass
         if not parsed_any:
-            return templates.TemplateResponse("setup.html", {
-                "request": request,
-                "error": t["error_file_invalid"],
-                "app_name": APP_NAME,
-                "theme": settings["theme"],
-                "t": t, "lang": lang
-            }, status_code=400)
+            return render_error(t["error_file_invalid"])
 
         if imported_settings:
             s = get_settings()
             s.update(imported_settings)
             s["timezone"] = validate_timezone(s.get("timezone"))
             s["language"] = validate_language(s.get("language"))
+            s["tag_types"] = clean_tag_types(s.get("tag_types", []))
             save_settings(s)
 
         return RedirectResponse("/", 303)
 
     else:
         if initial_balance is None:
-            return templates.TemplateResponse("setup.html", {
-                "request": request,
-                "error": t["error_initial_balance_required"],
-                "app_name": APP_NAME,
-                "theme": settings["theme"],
-                "t": t, "lang": lang
-            }, status_code=400)
+            return render_error(t["error_initial_balance_required"])
 
         s = get_settings()
         entry = Movement(
@@ -519,7 +557,8 @@ async def setup_post(
 async def add_movement(
     action: Literal["add","withdraw"] = Form(...),
     amount: float = Form(...),
-    description: Optional[str] = Form(default="")
+    description: Optional[str] = Form(default=""),
+    tags: List[str] = Form(default=[])
 ):
     guard = ensure_setup_page()
     if guard: return guard
@@ -530,6 +569,17 @@ async def add_movement(
     delta = float(amount) if action == "add" else -float(amount)
     new_balance = round(balance + delta, 2)
 
+    # Normalize tags (trim + dedupe)
+    norm_tags: List[str] = []
+    seen = set()
+    for tname in tags or []:
+        name = (tname or "").strip()
+        if not name: continue
+        key = name.lower()
+        if key in seen: continue
+        seen.add(key)
+        norm_tags.append(name)
+
     s = get_settings()
     entry = Movement(
         kind="movement",
@@ -538,7 +588,8 @@ async def add_movement(
         amount=float(amount),
         delta=delta,
         description=description or "",
-        resulting_balance=new_balance
+        resulting_balance=new_balance,
+        tags=norm_tags
     )
     append_entry(entry)
     return RedirectResponse("/", 303)
@@ -639,6 +690,8 @@ async def settings_post(
     currency: Literal["EUR","USD","GBP"] = Form(...),
     timezone: str = Form(...),
     language: Literal["en","es","fr","zh","pt","ja","de","it"] = Form(...),
+    tag_name: List[str] = Form(default=[]),
+    tag_color: List[str] = Form(default=[]),
 ):
     try:
         fs = float(fade_start)
@@ -647,12 +700,25 @@ async def settings_post(
     if fs <= 0:
         fs = 1.0
 
+    # Build tag_types from paired arrays
+    tt: List[Dict[str, str]] = []
+    for i in range(max(len(tag_name), len(tag_color))):
+        name = (tag_name[i] if i < len(tag_name) else "").strip()
+        color = (tag_color[i] if i < len(tag_color) else "").strip()
+        if not name:
+            continue
+        if not HEX_RE.match(color):
+            color = "#777777"
+        tt.append({"name": name, "color": color})
+    tt = clean_tag_types(tt)
+
     s = get_settings()
     s["theme"] = theme
     s["fade_start"] = fs
     s["currency"] = currency
     s["timezone"] = validate_timezone(timezone)
     s["language"] = validate_language(language)
+    s["tag_types"] = tt
 
     save_settings(s)
     if is_initialized():

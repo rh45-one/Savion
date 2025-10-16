@@ -15,12 +15,34 @@
         <option value="withdraw">{{ t.action_withdraw }}</option>
       </select>
     </label>
+
     <label>{{ t.form_amount }}
       <input type="number" name="amount" step="0.01" min="0" required>
     </label>
+
     <label style="grid-column: 1 / -1;">{{ t.form_description_optional }}
       <input type="text" name="description" placeholder="{{ t.form_description_optional }}">
     </label>
+
+    <!-- Tags (checkboxes) -->
+    <div class="tag-picker" style="grid-column: 1 / -1;">
+      <div class="label">{{ t.form_tags }}</div>
+      {% if tag_types and tag_types|length > 0 %}
+        <div class="tag-options">
+          {% for tg in tag_types %}
+            {% set name = tg.name %}
+            {% set color = tg.color %}
+            <label class="tag-option">
+              <input type="checkbox" name="tags" value="{{ name }}">
+              <span class="tag-chip" style="background: {{ color }};">{{ name }}</span>
+            </label>
+          {% endfor %}
+        </div>
+      {% else %}
+        <small class="muted">No tags defined yet — add some in Settings.</small>
+      {% endif %}
+    </div>
+
     <button type="submit">{{ t.form_submit }}</button>
   </form>
 </section>
@@ -60,6 +82,23 @@
         <input type="number" name="max" step="0.01" value="{{ max_str }}" min="0">
       </label>
 
+      <!-- Tag filters (multi-checkbox) -->
+      {% if tag_types and tag_types|length > 0 %}
+      <div class="tag-filter" style="grid-column: 1 / -1;">
+        <div class="label">{{ t.filters_tags }}</div>
+        <div class="tag-options">
+          {% for tg in tag_types %}
+            {% set name = tg.name %}
+            {% set color = tg.color %}
+            <label class="tag-option">
+              <input type="checkbox" name="tags" value="{{ name }}" {% if name in selected_tags %}checked{% endif %}>
+              <span class="tag-chip" style="background: {{ color }};">{{ name }}</span>
+            </label>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
       <div style="display:flex; gap:8px; align-items:center; grid-column: 1 / -1;">
         <button type="submit">{{ t.filters_apply }}</button>
         <button type="button" onclick="window.location.href='/'">{{ t.filters_clear }}</button>
@@ -74,6 +113,7 @@
       <div class="cell">{{ t.table_amount }}</div>
       <div class="cell">{{ t.table_balance }}</div>
       <div class="cell">{{ t.table_description }}</div>
+      <div class="cell">{{ t.table_tags }}</div>
     </div>
 
     {% for r in movements %}
@@ -83,6 +123,15 @@
         <div class="cell" data-label="{{ t.table_amount }}">{{ r.amount_display }}</div>
         <div class="cell" data-label="{{ t.table_balance }}">{{ r.balance_display }}</div>
         <div class="cell" data-label="{{ t.table_description }}">{{ r.description }}</div>
+        <div class="cell" data-label="{{ t.table_tags }}">
+          {% if r.tags and r.tags|length > 0 %}
+            <div class="tag-list">
+              {% for tg in r.tags %}
+                <span class="tag-chip" style="background: {{ tg.color }};">{{ tg.name }}</span>
+              {% endfor %}
+            </div>
+          {% endif %}
+        </div>
       </div>
     {% else %}
       <div class="row">

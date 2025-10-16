@@ -306,3 +306,68 @@ select {
   gap: 12px;
   flex-wrap: wrap;
 }
+
+/* === Tags === */
+.tag-picker .label,
+.tag-filter .label { font-weight: 600; margin-bottom: 6px; color: var(--text); }
+
+.tag-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tag-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 0;
+}
+
+.tag-chip {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 999px;
+  line-height: 1;
+  font-size: 12px;
+  color: #fff; /* works for most colors; overriding text for contrast simplicity */
+  white-space: nowrap;
+}
+
+.tag-list { display: flex; flex-wrap: wrap; gap: 6px; }
+
+/* Make tags wrap nicely in the table on mobile */
+@media (max-width: 700px) {
+  .table .cell[data-label="{{ t.table_tags if t else 'Tags' }}"] .tag-list { /* best-effort: Jinja at build */
+    gap: 6px;
+  }
+}
+
+/* === Tag editor (Settings) === */
+.tag-editor {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px;
+  background: var(--card);
+}
+
+.tag-rows {
+  display: grid;
+  gap: 10px;
+}
+
+.tag-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 10px;
+  align-items: end;
+}
+
+.tag-row .tag-remove {
+  align-self: center;
+}
+
+@media (max-width: 600px) {
+  .tag-row { grid-template-columns: 1fr 1fr; }
+  .tag-row .tag-remove { grid-column: 1 / -1; justify-self: start; }
+}

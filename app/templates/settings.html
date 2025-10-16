@@ -9,7 +9,7 @@
       <option value="light"      {% if settings.theme == 'light' %}selected{% endif %}>Light</option>
       <option value="dracula"    {% if settings.theme == 'dracula' %}selected{% endif %}>Dracula</option>
       <option value="winclassic" {% if settings.theme == 'winclassic' %}selected{% endif %}>Windows Classic</option>
-      <option value="system1" {% if settings.theme == 'system1' %}selected{% endif %}>Apple System 1</option>
+      <option value="system1"    {% if settings.theme == 'system1' %}selected{% endif %}>Apple System 1</option>
     </select>
   </label>
 
@@ -45,6 +45,30 @@
     </select>
   </label>
 
+  <!-- Tag types editor -->
+  <fieldset class="tag-editor" style="grid-column: 1 / -1;">
+    <legend>{{ t.settings_tags_group }}</legend>
+    <p class="muted" style="margin-top:0">{{ t.settings_tags_help }}</p>
+
+    <div id="tagRows" class="tag-rows">
+      {% for tg in settings.tag_types %}
+      <div class="tag-row">
+        <label>{{ t.settings_tag_name }}
+          <input type="text" name="tag_name" value="{{ tg.name }}" required>
+        </label>
+        <label>{{ t.settings_tag_color }}
+          <input type="color" name="tag_color" value="{{ tg.color|default('#777777') }}">
+        </label>
+        <button type="button" class="tag-remove">{{ t.settings_remove }}</button>
+      </div>
+      {% endfor %}
+    </div>
+
+    <div>
+      <button type="button" id="addTagBtn">{{ t.settings_add_tag }}</button>
+    </div>
+  </fieldset>
+
   <button type="submit">{{ t.settings_save }}</button>
 </form>
 
@@ -54,15 +78,13 @@
     var input = document.getElementById('tzInput');
     var preview = document.getElementById('tzPreview');
     if (!input || !preview) return;
-
     function render(zone) {
       if (!zone || !zone.trim()) {
         preview.innerHTML = '{{ t.settings_timezone|escape }}';
         return;
       }
       try {
-        var now = new Date();
-        var s = now.toLocaleString('en-GB', {
+        var s = new Date().toLocaleString('en-GB', {
           timeZone: zone,
           year: 'numeric', month: '2-digit', day: '2-digit',
           hour: '2-digit', minute: '2-digit', hour12: false
@@ -72,10 +94,44 @@
         preview.innerHTML = '⚠️ Invalid timezone.';
       }
     }
-
     render(input.value);
     input.addEventListener('input', function () { render(input.value); });
     input.addEventListener('change', function () { render(input.value); });
+  })();
+
+  // Tag editor
+  (function () {
+    var rows = document.getElementById('tagRows');
+    var addBtn = document.getElementById('addTagBtn');
+    if (!rows || !addBtn) return;
+
+    function onRemove(e) {
+      var row = e.target.closest('.tag-row');
+      if (row) row.remove();
+    }
+
+    function addRow(name, color) {
+      var div = document.createElement('div');
+      div.className = 'tag-row';
+      div.innerHTML = `
+        <label>{{ t.settings_tag_name }}
+          <input type="text" name="tag_name" value="${name || ''}" required>
+        </label>
+        <label>{{ t.settings_tag_color }}
+          <input type="color" name="tag_color" value="${color || '#777777'}">
+        </label>
+        <button type="button" class="tag-remove">{{ t.settings_remove }}</button>
+      `;
+      div.querySelector('.tag-remove').addEventListener('click', onRemove);
+      rows.appendChild(div);
+    }
+
+    // Bind existing remove buttons
+    rows.querySelectorAll('.tag-remove').forEach(function (btn) {
+      btn.addEventListener('click', onRemove);
+    });
+
+    addBtn.addEventListener('click', function () { addRow('', '#777777'); });
   })();
 </script>
 {% endblock %}
