@@ -1,0 +1,48 @@
+/* Theme variants live here. The default (dark) stays in style.css as fallback. */
+
+/* ===== Light ===== */
+:root[data-theme="light"] {
+  --bg: #f7f8fa;
+  --card: #ffffff;
+  --soft: #f2f4f7;
+  --text: #1f2937;
+  --muted: #667085;
+  --border: #e5e7eb;
+  --primary: #3b82f6;
+
+  /* filters panel inputs background */
+  --filter-field-bg: #ffffff;
+}
+
+/* Light-specific controls (icons, etc.) */
+:root[data-theme="light"] input[type="date"]::-webkit-calendar-picker-indicator { filter: none; }
+
+/* ===== Dracula ===== */
+:root[data-theme="dracula"] {
+  --bg: #282a36;
+  --card: #2d2f3b;
+  --soft: #232531;
+  --text: #f8f8f2;
+  --muted: #b5b7c6;
+  --border: #3b3d4a;
+  --primary: #bd93f9;
+
+  --filter-field-bg: rgba(255,255,255,0.08);
+}
+
+/* Dracula control tweaks */
+:root[data-theme="dracula"] input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1) brightness(1.2);
+}
+
+/* ===== Dark overrides (optional) =====
+   Keeping dark defaults in style.css; this block is only to define panel field bg
+   when the theme is explicitly "dark" and themes.css is loaded. */
+:root[data-theme="dark"] {
+  --filter-field-bg: rgba(255,255,255,0.06);
+}
+
+/* Ensure the date icon stays visible on dark */
+:root[data-theme="dark"] input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1) brightness(1.2);
+}

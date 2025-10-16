@@ -10,29 +10,6 @@
   --ok: #7ad47a;
   --border: #1e232a;
 }
-:root[data-theme="light"] {
-  --bg: #f7f9fb;
-  --panel: #ffffff;
-  --soft: #f1f4f8;
-  --text: #0a0f14;
-  --muted: #586071;
-  --accent: #2a7ef0;
-  --danger: #e25757;
-  --ok: #2e8f2e;
-  --border: #e6e9ee;
-}
-/* Dracula theme */
-:root[data-theme="dracula"] {
-  --bg: #282a36;        /* background */
-  --panel: #1f2130;     /* slightly darker than main to separate panels */
-  --soft: #3a3d4e;      /* current-line-ish */
-  --text: #f8f8f2;      /* foreground */
-  --muted: #6272a4;     /* comments */
-  --accent: #bd93f9;    /* purple */
-  --danger: #ff5555;    /* red */
-  --ok: #50fa7b;        /* green */
-  --border: #44475a;    /* border */
-}
 
 /* BASE */
 * { box-sizing: border-box; }
