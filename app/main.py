@@ -391,7 +391,8 @@ def ensure_setup_page():
 
 def format_currency(value: float, currency: str) -> str:
     sign = "-" if value < 0 else ""
-    amt = f"{abs(value):.2f}"
+    # Use thousands separators, e.g., 1000 -> 1,000.00
+    amt = f"{abs(value):,.2f}"
     if currency == "USD":
         return f"{sign}${amt}"
     if currency == "GBP":
