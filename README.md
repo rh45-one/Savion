@@ -71,6 +71,12 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 - Health check: `GET /healthz` returns basic status.
 - Concurrency: file writes guarded by an internal thread lock to avoid concurrent corruption.
 
+### New additions
+
+- Recent Movements display count: choose how many movements to show (50, 100, 200, 500, All). Default is 50. The selector lives at the bottom of the Recent Movements list and preserves any active filters.
+- Balance visibility toggle: a small eye/eye-off button on the home page to show/hide the total balance. Preference is saved to `settings.json` and included in export/import via `settings` snapshots. When hidden, the currency remains visible (e.g., `$•••••••`, `£•••••••`, `••••••• €`).
+- Number formatting: all displayed amounts use thousands separators (e.g., `1,000.00`, `12,345.67`).
+
 ## API / Endpoints
 
 - `GET /` — main UI (requires setup).
@@ -79,7 +85,12 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 - `GET /export` — download ledger (appends `settings` snapshot before exporting).
 - `GET /reset`, `POST /reset` — reset workflow with verification.
 - `GET /settings`, `POST /settings` — view and update UI settings.
+- `POST /toggle-balance` — toggle the persisted “show balance” preference from the home page.
 - `GET /healthz` — health check.
+
+Notes:
+
+- The home page supports optional query parameters for filtering and display size, e.g. `/?q=groceries&action=add&limit=100`. Use `limit=all` to show all filtered items.
 
 ## Ledger format
 
@@ -97,7 +108,7 @@ Entries are validated when read; malformed lines are ignored.
 - If the app shows the setup page: ensure `ledger.jsonl` exists and contains at least one valid `setup`/`movement`/`reset` entry.
 - Import requires valid JSONL (one JSON object per line). Malformed lines are skipped; import fails if none are valid.
 - Permissions: when running in Docker, mount a volume or host directory to `/data` and ensure the container user can read/write it.
-- Movement list on the UI is limited to the most recent 200 movements for performance.
+- Movement list shows 50 items by default for performance. Use the selector at the bottom of the list to change to 100/200/500 or All.
 
 ## Developer notes
 
