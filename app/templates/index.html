@@ -2,8 +2,31 @@
 {% block content %}
 
 <section class="balance card">
-  <div>{{ t.balance_current }}</div>
-  <div class="balance-amount" style="color: {{ balance_color }}">{{ balance_display }}</div>
+  <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
+    <span>{{ t.balance_current }}</span>
+    <form action="/toggle-balance" method="post" style="margin:0">
+      <button type="submit" class="icon-btn" title="Toggle balance visibility" aria-label="Toggle balance visibility" style="vertical-align:middle">
+        {% if show_balance %}
+          <!-- material eye icon -->
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon-16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zm0 13a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11zm0-9a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7z"/>
+          </svg>
+        {% else %}
+          <!-- material eye-off icon -->
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon-16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M12 6.5c3.08 0 5.95 1.64 7.68 4.5-.51.82-1.14 1.55-1.86 2.17l1.42 1.42c1.07-.9 1.98-1.98 2.66-3.22C20.17 7.07 16.35 4.5 12 4.5c-1.43 0-2.79.3-4.03.83l1.56 1.56c.8-.26 1.65-.39 2.47-.39zM2.81 2.81 1.39 4.22l2.3 2.3A12.32 12.32 0 0 0 1 12c1.73 4.39 6 7.5 11 7.5 2.03 0 3.93-.53 5.57-1.46l2.21 2.21 1.41-1.41L2.81 2.81zM12 17.5c-3.08 0-5.95-1.64-7.68-4.5a10.48 10.48 0 0 1 2.27-2.55l1.57 1.57a5.5 5.5 0 0 0 6.82 6.82l1.57 1.57A10.64 10.64 0 0 1 12 17.5zm0-9c-.28 0-.56.03-.82.09l5.23 5.23c.06-.26.09-.54.09-.82a3.5 3.5 0 0 0-3.5-3.5z"/>
+          </svg>
+        {% endif %}
+      </button>
+    </form>
+  </div>
+  <div class="balance-amount" style="color: {{ balance_color }}">
+    {% if show_balance %}
+      {{ balance_display }}
+    {% else %}
+      {{ balance_obfuscated }}
+    {% endif %}
+  </div>
 </section>
 
 <section class="card">

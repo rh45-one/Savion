@@ -173,7 +173,8 @@ DEFAULT_SETTINGS = {
     "currency": "EUR",
     "timezone": "Europe/London",
     "language": "en",
-    "tag_types": []             # list of {"name": str, "color": "#RRGGBB"}
+    "tag_types": [],            # list of {"name": str, "color": "#RRGGBB"}
+    "show_balance": True        # home-page toggle to show/hide total balance
 }
 
 app = FastAPI(title=APP_NAME)
@@ -203,6 +204,7 @@ class SettingsEntry(BaseModel):
     timezone: Optional[str] = None
     language: Optional[Literal["en","es","fr","zh","pt","ja","de","it"]] = None
     tag_types: Optional[List[Dict[str, Any]]] = None
+    show_balance: Optional[bool] = None
 
 class EditEntry(BaseModel):
     """Non-destructive edits for movements (description/tags only)."""
@@ -305,6 +307,8 @@ def get_settings() -> dict:
         data["timezone"] = validate_timezone(data.get("timezone"))
         data["language"] = validate_language(data.get("language"))
         data["tag_types"] = clean_tag_types(data.get("tag_types", []))
+        # Coerce show_balance to bool
+        data["show_balance"] = bool(data.get("show_balance", True))
         return data
     except Exception:
         return DEFAULT_SETTINGS.copy()
@@ -324,6 +328,7 @@ def append_settings_to_ledger(s: dict):
         timezone=s.get("timezone", DEFAULT_SETTINGS["timezone"]),
         language=s.get("language", DEFAULT_SETTINGS["language"]),
         tag_types=s.get("tag_types", []),
+        show_balance=bool(s.get("show_balance", True)),
     )
     with write_lock:
         with open(LEDGER_PATH, "a", encoding="utf-8") as f:
@@ -419,6 +424,13 @@ async def index(request: Request):
     currency = settings["currency"]
     tz_name = settings["timezone"]
     balance_display = format_currency(balance, currency)
+    # Obfuscated balance retains currency symbol only
+    if currency == "USD":
+        balance_obfuscated = "$\u2022\u2022\u2022\u2022\u2022\u2022\u2022"
+    elif currency == "GBP":
+        balance_obfuscated = "£\u2022\u2022\u2022\u2022\u2022\u2022\u2022"
+    else:  # EUR default
+        balance_obfuscated = "\u2022\u2022\u2022\u2022\u2022\u2022\u2022 \u20AC"
 
     # Build overrides from edits (last write wins by file order)
     overrides: Dict[str, Dict[str, Any]] = {}
@@ -550,6 +562,8 @@ async def index(request: Request):
         "request": request,
         "balance_display": balance_display,
         "balance_color": balance_color,
+        "show_balance": settings.get("show_balance", True),
+        "balance_obfuscated": balance_obfuscated,
         "movements": movements,
         "app_name": APP_NAME,
         "theme": settings["theme"],
@@ -566,6 +580,17 @@ async def index(request: Request):
         "selected_tags": selected_tags,
         "limit_selected": ("all" if limit is None else str(limit)),
     })
+
+@app.post("/toggle-balance")
+async def toggle_balance():
+    s = get_settings()
+    cur = bool(s.get("show_balance", True))
+    s["show_balance"] = not cur
+    save_settings(s)
+    # Append to ledger so it persists across exports too
+    if is_initialized():
+        append_settings_to_ledger(s)
+    return RedirectResponse("/", 303)
 
 @app.get("/setup", response_class=HTMLResponse)
 async def setup_get(request: Request):
@@ -631,7 +656,8 @@ async def setup_post(
                                     "currency": (se.currency or DEFAULT_SETTINGS["currency"]),
                                     "timezone": validate_timezone(se.timezone),
                                     "language": validate_language(se.language),
-                                    "tag_types": clean_tag_types(se.tag_types or [])
+                                    "tag_types": clean_tag_types(se.tag_types or []),
+                                    "show_balance": bool(se.show_balance) if (se.show_balance is not None) else True,
                                 }
                             except Exception:
                                 pass
