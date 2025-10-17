@@ -46,6 +46,10 @@ EN_TRANSLATIONS: Dict[str, str] = {
     "table_tags": "Tags",
     "table_empty": "No movements yet.",
 
+    # Recent movements display count control
+    "recent_display_label": "Show",
+    "recent_display_all": "All",
+
     "settings_title": "Settings",
     "settings_theme": "Theme",
     "settings_fade_start": "Fade start (balance where green begins to fade)",
@@ -436,6 +440,21 @@ async def index(request: Request):
     selected_tags = [s for s in (selected_tags or []) if s.strip()]
     filters_open = any([q, action_filter in ("add", "withdraw"), start_str, end_str, min_str, max_str, selected_tags])
 
+    # Movements display limit
+    limit_raw = (qp.get("limit") or "50").strip().lower()
+    limit: Optional[int]
+    if limit_raw in ("all", "*"):
+        limit = None
+    else:
+        try:
+            limit_val = int(limit_raw)
+            if limit_val <= 0:
+                limit = 50
+            else:
+                limit = limit_val
+        except Exception:
+            limit = 50
+
     # Parse filters
     start_date = end_date = None
     try:
@@ -506,7 +525,10 @@ async def index(request: Request):
     filtered.sort(key=lambda r: parse_ts(r.timestamp), reverse=True)
 
     movements = []
-    for r in filtered[:200]:
+    # Apply limit (default 50). Hard ceil safety: 10000 to avoid runaway rendering.
+    slice_end = None if limit is None else min(limit, 10000)
+    display_rows = filtered if slice_end is None else filtered[:slice_end]
+    for r in display_rows:
         action_label = t["action_add"] if r.action == "add" else t["action_withdraw"]
         tags_display = []
         for tag in (r.tags or []):
@@ -542,6 +564,7 @@ async def index(request: Request):
         "filters_open": filters_open,
         "tag_types": tag_types,
         "selected_tags": selected_tags,
+        "limit_selected": ("all" if limit is None else str(limit)),
     })
 
 @app.get("/setup", response_class=HTMLResponse)

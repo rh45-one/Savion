@@ -172,6 +172,30 @@
       </div>
     {% endfor %}
   </div>
+
+  <!-- Display count control (bottom of the list) -->
+  <form method="get" class="form-inline" style="margin-top: 10px; display:flex; align-items:center; gap:8px;">
+    <!-- preserve existing filters via hidden inputs -->
+    <input type="hidden" name="q" value="{{ q }}">
+    <input type="hidden" name="action" value="{{ action_filter }}">
+    <input type="hidden" name="start" value="{{ start_str }}">
+    <input type="hidden" name="end" value="{{ end_str }}">
+    <input type="hidden" name="min" value="{{ min_str }}">
+    <input type="hidden" name="max" value="{{ max_str }}">
+    {% for tg in selected_tags %}
+      <input type="hidden" name="tags" value="{{ tg }}">
+    {% endfor %}
+
+    <label>{{ t.recent_display_label }}
+      <select name="limit" onchange="this.form.submit()">
+        <option value="50" {% if limit_selected == '50' %}selected{% endif %}>50</option>
+        <option value="100" {% if limit_selected == '100' %}selected{% endif %}>100</option>
+        <option value="200" {% if limit_selected == '200' %}selected{% endif %}>200</option>
+        <option value="500" {% if limit_selected == '500' %}selected{% endif %}>500</option>
+        <option value="all" {% if limit_selected == 'all' %}selected{% endif %}>{{ t.recent_display_all }}</option>
+      </select>
+    </label>
+  </form>
 </section>
 
 <script>
