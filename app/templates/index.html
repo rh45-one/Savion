@@ -175,6 +175,22 @@
               <button type="submit">{{ t.save }}</button>
               <button type="button" class="cancel-edit">{{ t.cancel }}</button>
             </div>
+
+            <!-- Delete controls: red trash icon -> confirm button -->
+            <div class="delete-row" style="margin-top:8px; display:flex; gap:8px; align-items:center;">
+              <button type="button" class="icon-btn danger delete-toggle" data-ts="{{ r.ts_raw }}" title="{{ t.delete }}" aria-label="{{ t.delete }}">
+                <!-- Trashcan icon -->
+                <svg viewBox="0 0 24 24" class="icon-16" aria-hidden="true">
+                  <path fill="currentColor" d="M9,3V4H4V6H5V20A2,2 0 0,0 7,22H17A2,2 0 0,0 19,20V6H20V4H15V3H9M7,6H17V20H7V6M9,8V18H11V8H9M13,8V18H15V8H13Z"/>
+                </svg>
+              </button>
+            </div>
+          </form>
+
+          <!-- Delete confirmation form (sibling to avoid nested forms) -->
+          <form class="delete-confirm" data-ts="{{ r.ts_raw }}" action="/movement/delete" method="post" hidden aria-hidden="true" style="margin:8px 0 0 0;">
+            <input type="hidden" name="target_ts" value="{{ r.ts_raw }}">
+            <button type="submit" class="danger">{{ t.delete_confirm }}</button>
           </form>
         </div>
 
@@ -228,6 +244,13 @@
     function getForm(cell) { return cell ? cell.querySelector('.edit-form') : null; }
     function getButton(cell) { return cell ? cell.querySelector('.edit-btn') : null; }
 
+    function resetDeleteUI(cell) {
+      if (!cell) return;
+      // Hide all delete-confirm forms in this cell; show all delete toggles
+      cell.querySelectorAll('.delete-confirm').forEach(function (f) { f.hidden = true; f.setAttribute('aria-hidden', 'true'); });
+      cell.querySelectorAll('.delete-toggle').forEach(function (b) { b.hidden = false; });
+    }
+
     function openForm(cell) {
       var form = getForm(cell), btn = getButton(cell);
       if (!form || !btn) return;
@@ -239,6 +262,7 @@
         if (c) c.classList.remove('editing');
         var b = c ? getButton(c) : null;
         if (b) b.setAttribute('aria-expanded', 'false');
+        resetDeleteUI(c);
       });
       form.hidden = false;
       form.setAttribute('aria-hidden', 'false');
@@ -246,6 +270,7 @@
       btn.setAttribute('aria-expanded', 'true');
       var input = form.querySelector('input[type="text"]');
       if (input) { input.focus(); try { input.select(); } catch(e){} }
+      resetDeleteUI(cell);
     }
 
     function closeForm(cell) {
@@ -255,6 +280,7 @@
       form.setAttribute('aria-hidden', 'true');
       cell.classList.remove('editing');
       btn.setAttribute('aria-expanded', 'false');
+      resetDeleteUI(cell);
     }
 
     // Ensure all forms are hidden on load
@@ -281,6 +307,22 @@
         var form = btn.closest('.edit-form');
         var cell = form ? form.closest('.cell') : null;
         if (cell) closeForm(cell);
+      });
+    });
+
+    // Delete toggle: show confirm button
+    document.querySelectorAll('.delete-toggle').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var cell = btn.closest('.cell');
+        if (!cell) return;
+        var ts = btn.getAttribute('data-ts');
+        var delForm = cell.querySelector('.delete-confirm[data-ts="' + CSS.escape(ts) + '"]');
+        if (!delForm) return;
+        btn.hidden = true;
+        delForm.hidden = false;
+        delForm.setAttribute('aria-hidden', 'false');
+        var focusBtn = delForm.querySelector('button[type="submit"]');
+        if (focusBtn) focusBtn.focus();
       });
     });
 

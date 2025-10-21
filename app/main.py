@@ -99,6 +99,8 @@ EN_TRANSLATIONS: Dict[str, str] = {
     "cancel": "Cancel",
     "edit_description": "Edit description",
     "edit_tags": "Edit tags",
+    "delete": "Delete",
+    "delete_confirm": "Confirm delete",
 
     # Extra UI copy
     "no_tags_defined": "No tags defined yet — add some in Settings.",
@@ -213,6 +215,12 @@ class EditEntry(BaseModel):
     target_ts: str            # identifies the movement by its original timestamp
     new_description: Optional[str] = None
     new_tags: Optional[List[str]] = None
+
+class DeleteEntry(BaseModel):
+    """Soft-delete a movement by timestamp. The original movement remains in ledger for audit, but is ignored in UI and balance calc."""
+    kind: Literal["delete"]
+    timestamp: str            # when the delete happened
+    target_ts: str            # movement timestamp being deleted
 
 # --- Helpers ---
 def validate_timezone(tz: Optional[str]) -> str:
@@ -370,7 +378,18 @@ def read_edits() -> List[EditEntry]:
                 continue
     return edits
 
+def read_deletes() -> List[DeleteEntry]:
+    deleted: List[DeleteEntry] = []
+    for obj in read_ledger_entries():
+        if obj.get("kind") == "delete":
+            try:
+                deleted.append(DeleteEntry(**obj))
+            except Exception:
+                continue
+    return deleted
+
 def compute_balance(rows: List[Movement]) -> float:
+    # Legacy helper kept for internal calls; current UI uses deletion-aware compute below.
     balance = 0.0
     for r in rows:
         if r.kind == "setup" and r.initial_balance is not None:
@@ -378,6 +397,20 @@ def compute_balance(rows: List[Movement]) -> float:
         elif r.kind == "movement" and r.delta is not None:
             balance += float(r.delta)
     return round(balance, 2)
+
+def compute_balance_and_map(rows: List[Movement], deleted_ts: set[str]) -> tuple[float, Dict[str, float]]:
+    """Return final balance and a map of resulting_balance per movement timestamp, skipping deleted movements."""
+    balance = 0.0
+    per_move_balance: Dict[str, float] = {}
+    for r in rows:
+        if r.kind == "setup" and r.initial_balance is not None:
+            balance = float(r.initial_balance)
+        elif r.kind == "movement" and r.delta is not None:
+            if r.timestamp in deleted_ts:
+                continue
+            balance += float(r.delta)
+            per_move_balance[r.timestamp] = round(balance, 2)
+    return round(balance, 2), per_move_balance
 
 def append_entry(entry: BaseModel):
     with write_lock:
@@ -410,7 +443,9 @@ async def index(request: Request):
     t = t_for(lang)
 
     rows = read_movements()
-    balance = compute_balance(rows)
+    # Build deletion set
+    deleted_ts_set = {d.target_ts for d in read_deletes()}
+    balance, per_move_balance = compute_balance_and_map(rows, deleted_ts_set)
 
     fade_start = float(settings["fade_start"])
     if balance <= 0:
@@ -489,7 +524,7 @@ async def index(request: Request):
     tag_types = settings.get("tag_types", [])
     tag_color_map = { (t["name"] or "").strip().lower(): t.get("color", "#777777") for t in tag_types }
 
-    base_movs = [r for r in rows if r.kind == "movement"]
+    base_movs = [r for r in rows if r.kind == "movement" and r.timestamp not in deleted_ts_set]
 
     def apply_override(m: Movement) -> Movement:
         ov = overrides.get(m.timestamp)
@@ -553,7 +588,7 @@ async def index(request: Request):
             "timestamp_display": format_display_date(r.timestamp, tz_name),
             "action_display": action_label,
             "amount_display": format_currency(float(r.amount or 0.0), currency),
-            "balance_display": format_currency(float(r.resulting_balance or 0.0), currency),
+            "balance_display": format_currency(float(per_move_balance.get(r.timestamp, r.resulting_balance or 0.0)), currency),
             "description": r.description or "",
             "tags": tags_display,
             "tags_names": [tg["name"] for tg in tags_display]
@@ -663,9 +698,11 @@ async def setup_post(
                             except Exception:
                                 pass
                         else:
-                            # Validate movements/edits structurally
+                            # Validate movements/edits/deletes structurally
                             if k == "edit":
                                 EditEntry(**obj)
+                            elif k == "delete":
+                                DeleteEntry(**obj)
                             else:
                                 Movement(**obj)
                         f.write(json.dumps(obj, ensure_ascii=False) + "\n")
@@ -768,6 +805,31 @@ async def edit_movement(
         target_ts=target_ts,
         new_description=(new_description or ""),
         new_tags=norm_tags
+    )
+    append_entry(entry)
+    return RedirectResponse("/", 303)
+
+@app.post("/movement/delete")
+async def delete_movement(target_ts: str = Form(...)):
+    """Append a delete entry for an existing movement to invert its effect from balances and listings."""
+    guard = ensure_setup_page()
+    if guard: return guard
+
+    # Validate that target exists and is a movement
+    rows = read_movements()
+    target = next((m for m in rows if m.kind == "movement" and m.timestamp == target_ts), None)
+    if not target:
+        return RedirectResponse("/", 303)
+
+    # Ensure not already deleted
+    if any(d.target_ts == target_ts for d in read_deletes()):
+        return RedirectResponse("/", 303)
+
+    s = get_settings()
+    entry = DeleteEntry(
+        kind="delete",
+        timestamp=now_iso_in_tz(s["timezone"]),
+        target_ts=target_ts,
     )
     append_entry(entry)
     return RedirectResponse("/", 303)
