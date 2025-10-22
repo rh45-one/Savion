@@ -141,7 +141,13 @@
         <div class="cell" data-label="{{ t.table_date }}">{{ r.timestamp_display }}</div>
         <div class="cell" data-label="{{ t.table_action }}">{{ r.action_display }}</div>
         <div class="cell" data-label="{{ t.table_amount }}">{{ r.amount_display }}</div>
-        <div class="cell" data-label="{{ t.table_balance }}">{{ r.balance_display }}</div>
+        <div class="cell" data-label="{{ t.table_balance }}">
+          {% if show_balance %}
+            {{ r.balance_display }}
+          {% else %}
+            {{ balance_obfuscated }}
+          {% endif %}
+        </div>
 
         <!-- Description + inline edit -->
         <div class="cell" data-label="{{ t.table_description }}">
