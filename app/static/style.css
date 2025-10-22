@@ -506,6 +506,11 @@ button.tag-remove[disabled] { opacity: .5; cursor: not-allowed; }
   justify-content: flex-end;
 }
 .edit-actions button { min-width: 96px; }
+.edit-actions .icon-btn { min-width: 44px; min-height: 44px; padding: 8px; align-self: center; }
+.edit-actions .delete-confirm-btn { order: 1; }
+.edit-actions .delete-toggle { order: 0; }
+.edit-actions button[type="submit"] { order: 2; }
+.edit-actions .cancel-edit { order: 3; }
 
 /* Accessibility helper */
 .sr-only {
@@ -572,6 +577,7 @@ button.tag-remove[disabled] { opacity: .5; cursor: not-allowed; }
 @media (max-width: 600px) {
   .edit-actions { flex-direction: column; }
   .edit-actions button { width: 100%; }
+  .edit-actions .icon-btn { width: 100%; margin-left: 0; justify-content: center; }
   .icon-btn { padding: 8px; } /* larger tap target */
 }
 

@@ -172,25 +172,15 @@
             {% endif %}
 
             <div class="edit-actions">
-              <button type="submit">{{ t.save }}</button>
-              <button type="button" class="cancel-edit">{{ t.cancel }}</button>
-            </div>
-
-            <!-- Delete controls: red trash icon -> confirm button -->
-            <div class="delete-row" style="margin-top:8px; display:flex; gap:8px; align-items:center;">
               <button type="button" class="icon-btn danger delete-toggle" data-ts="{{ r.ts_raw }}" title="{{ t.delete }}" aria-label="{{ t.delete }}">
-                <!-- Trashcan icon -->
                 <svg viewBox="0 0 24 24" class="icon-16" aria-hidden="true">
                   <path fill="currentColor" d="M9,3V4H4V6H5V20A2,2 0 0,0 7,22H17A2,2 0 0,0 19,20V6H20V4H15V3H9M7,6H17V20H7V6M9,8V18H11V8H9M13,8V18H15V8H13Z"/>
                 </svg>
               </button>
+              <button type="button" class="danger delete-confirm-btn" data-ts="{{ r.ts_raw }}" hidden aria-hidden="true">{{ t.delete_confirm }}</button>
+              <button type="submit">{{ t.save }}</button>
+              <button type="button" class="cancel-edit">{{ t.cancel }}</button>
             </div>
-          </form>
-
-          <!-- Delete confirmation form (sibling to avoid nested forms) -->
-          <form class="delete-confirm" data-ts="{{ r.ts_raw }}" action="/movement/delete" method="post" hidden aria-hidden="true" style="margin:8px 0 0 0;">
-            <input type="hidden" name="target_ts" value="{{ r.ts_raw }}">
-            <button type="submit" class="danger">{{ t.delete_confirm }}</button>
           </form>
         </div>
 
@@ -246,8 +236,8 @@
 
     function resetDeleteUI(cell) {
       if (!cell) return;
-      // Hide all delete-confirm forms in this cell; show all delete toggles
-      cell.querySelectorAll('.delete-confirm').forEach(function (f) { f.hidden = true; f.setAttribute('aria-hidden', 'true'); });
+      // Hide inline confirm buttons; show trash toggles
+      cell.querySelectorAll('.delete-confirm-btn').forEach(function (b) { b.hidden = true; b.setAttribute('aria-hidden', 'true'); });
       cell.querySelectorAll('.delete-toggle').forEach(function (b) { b.hidden = false; });
     }
 
@@ -310,19 +300,40 @@
       });
     });
 
-    // Delete toggle: show confirm button
+    // Delete toggle: show inline confirm button
     document.querySelectorAll('.delete-toggle').forEach(function (btn) {
       btn.addEventListener('click', function () {
         var cell = btn.closest('.cell');
         if (!cell) return;
         var ts = btn.getAttribute('data-ts');
-        var delForm = cell.querySelector('.delete-confirm[data-ts="' + CSS.escape(ts) + '"]');
-        if (!delForm) return;
+        var confirmBtn = cell.querySelector('.delete-confirm-btn[data-ts="' + CSS.escape(ts) + '"]');
+        if (!confirmBtn) return;
         btn.hidden = true;
-        delForm.hidden = false;
-        delForm.setAttribute('aria-hidden', 'false');
-        var focusBtn = delForm.querySelector('button[type="submit"]');
-        if (focusBtn) focusBtn.focus();
+        confirmBtn.hidden = false;
+        confirmBtn.setAttribute('aria-hidden', 'false');
+        confirmBtn.focus();
+      });
+    });
+
+    // Confirm delete: submit ephemeral form to /movement/delete
+    document.querySelectorAll('.delete-confirm-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var cell = btn.closest('.cell');
+        if (!cell) return;
+        var edit = cell.querySelector('.edit-form');
+        var tsInput = edit ? edit.querySelector('input[name="target_ts"]') : null;
+        var ts = tsInput ? tsInput.value : btn.getAttribute('data-ts');
+        if (!ts) return;
+        var f = document.createElement('form');
+        f.method = 'POST';
+        f.action = '/movement/delete';
+        var h = document.createElement('input');
+        h.type = 'hidden';
+        h.name = 'target_ts';
+        h.value = ts;
+        f.appendChild(h);
+        document.body.appendChild(f);
+        f.submit();
       });
     });
 
