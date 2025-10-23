@@ -142,7 +142,7 @@ EN_TRANSLATIONS: Dict[str, str] = {
     "error_reset_verification": "Verification failed. Type RESET and solve the math correctly.",
 
     # Summary page
-    "summary_title": "Monthly Summary",
+    "summary_title": "Monthly Summaries",
     "summary_month": "Month",
     "summary_total_change": "Net change",
     "summary_entries": "Entries",

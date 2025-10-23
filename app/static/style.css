@@ -633,8 +633,26 @@ button.tag-remove[disabled] { opacity: .5; cursor: not-allowed; }
 .summary-amount-inline { margin-left: 8px; }
 .amount-positive { color: var(--ok); }
 .amount-negative { color: var(--danger); }
-.summary-content { margin-top: 10px; display: block; width: 100%; margin-left: 24px; }
-.summary-mov-header { display: grid; grid-template-columns: 1fr auto auto; gap: 10px; font-weight: 700; color: var(--muted); padding: 6px 0; }
+.summary-content {
+  /* Shared table-like columns for header and rows */
+  --col-ts: minmax(14ch, 16ch);       /* Date width: fits dd/mm/yyyy hh:mm, capped */
+  --col-action: minmax(8ch, 12ch);    /* "Add" / "Withdraw" pill, capped */
+  --col-amount: minmax(12ch, 1fr);    /* Amount flexes, keeps min for currency */
+  margin-top: 10px;
+  margin-left: 24px;
+}
+.summary-content[hidden] { display: none !important; }
+.summary-mov-header {
+  display: grid;
+  grid-template-columns: var(--col-ts) var(--col-action) var(--col-amount);
+  gap: 8px;
+  font-weight: 700;
+  color: var(--muted);
+  padding: 6px 0;
+  align-items: baseline;
+}
+.summary-mov-header .col-ts { text-align: left; }
+.summary-mov-header .col-action { text-align: left; }
 .summary-mov-header .col-amount { text-align: right; }
 .summary-mov-list { display: grid; gap: 8px; }
 .summary-mov-row {
@@ -642,12 +660,17 @@ button.tag-remove[disabled] { opacity: .5; cursor: not-allowed; }
   padding-top: 8px;
 }
 .summary-mov-row:first-child { border-top: 0; padding-top: 0; }
-.mov-line-1 { display: grid; grid-template-columns: 1fr auto auto; gap: 10px; align-items: baseline; }
+.mov-line-1 {
+  display: grid;
+  grid-template-columns: var(--col-ts) var(--col-action) var(--col-amount);
+  gap: 8px;
+  align-items: baseline;
+}
 .mov-ts { color: var(--muted); font-size: 12px; }
 .action-pill { font-weight: 700; font-size: 12px; padding: 2px 8px; border-radius: 999px; }
 .action-add { background: rgba(122,212,122,0.18); color: var(--ok); }
 .action-withdraw { background: rgba(255,107,107,0.18); color: var(--danger); }
-.mov-amount { font-weight: 800; text-align: right; font-variant-numeric: tabular-nums; }
+.mov-amount { font-weight: 800; text-align: right; font-variant-numeric: tabular-nums; justify-self: end; }
 .mov-desc { margin-top: 4px; }
 .mov-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
 
