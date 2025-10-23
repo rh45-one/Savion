@@ -37,8 +37,8 @@
                   <div class="mov-line-1">
                     <span class="mov-ts">{{ m.timestamp_display }}</span>
                     <span class="mov-action action-pill {{ 'action-add' if m.action == 'add' else 'action-withdraw' }}">{{ m.action_display }}</span>
-                    {% set mov_pos = m.amount_value >= 0 %}
-                    <span class="mov-amount {{ 'amount-positive' if mov_pos else 'amount-negative' }}">{{ m.amount_display }}</span>
+                    {% set mov_pos = (m.action == 'add') %}
+                    <span class="mov-amount {{ 'amount-positive' if mov_pos else 'amount-negative' }}">{% if mov_pos %}+{% else %}-{% endif %}{{ m.amount_display }}</span>
                   </div>
                   {% if m.description %}
                     <div class="mov-desc">{{ m.description }}</div>
