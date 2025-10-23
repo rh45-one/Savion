@@ -20,6 +20,7 @@ SUPPORTED_LANGS = ("en", "es", "fr", "zh", "pt", "ja", "de", "it")
 # --- English translations (fallback) ---
 EN_TRANSLATIONS: Dict[str, str] = {
     "nav_home": "Home",
+    "nav_summary": "Summary",
     "nav_export": "Export",
     "nav_settings": "Settings",
     "nav_reset": "Reset",
@@ -139,6 +140,12 @@ EN_TRANSLATIONS: Dict[str, str] = {
     "error_file_invalid": "File format invalid. Expecting JSON Lines exported by Savion.",
     "error_initial_balance_required": "Please enter an initial balance or choose Import.",
     "error_reset_verification": "Verification failed. Type RESET and solve the math correctly.",
+
+    # Summary page
+    "summary_title": "Monthly Summary",
+    "summary_month": "Month",
+    "summary_total_change": "Net change",
+    "summary_entries": "Entries",
 }
 
 TRANSLATIONS_PATH = os.path.join(BASE_DIR, "translations.json")
@@ -268,6 +275,50 @@ def format_now_preview(tz_name: str) -> str:
         tz = datetime.timezone.utc
     dt = datetime.datetime.now(tz=tz)
     return dt.strftime("%d/%m/%Y %H:%M")
+
+def year_month_from_ts(ts: str, tz_name: str) -> tuple[int, int]:
+    dt = parse_ts(ts)
+    try:
+        tz = ZoneInfo(tz_name)
+        dt = dt.astimezone(tz)
+    except Exception:
+        pass
+    return dt.year, dt.month
+
+def group_movements_by_month(movs: List[Movement], tz_name: str) -> List[Dict[str, Any]]:
+    """Group movement entries by calendar month/year and sum their deltas.
+    Returns a list of dicts: {year, month, total_change: float, count: int, is_in_progress: bool}
+    Sorted descending by (year, month).
+    """
+    groups: Dict[tuple[int,int], Dict[str, Any]] = {}
+    for m in movs:
+        if m.kind != "movement":
+            continue
+        y, mo = year_month_from_ts(m.timestamp, tz_name)
+        key = (y, mo)
+        g = groups.get(key)
+        if not g:
+            g = {"year": y, "month": mo, "total_change": 0.0, "count": 0}
+            groups[key] = g
+        g["total_change"] += float(m.delta or 0.0)
+        g["count"] += 1
+
+    # Determine current month/year in tz
+    try:
+        tz = ZoneInfo(tz_name)
+    except Exception:
+        tz = datetime.timezone.utc
+    now_dt = datetime.datetime.now(tz=tz)
+    cur_y, cur_m = now_dt.year, now_dt.month
+
+    out = []
+    for (y, mo), g in groups.items():
+        gcopy = g.copy()
+        gcopy["total_change"] = round(float(gcopy["total_change"]), 2)
+        gcopy["is_in_progress"] = (y == cur_y and mo == cur_m)
+        out.append(gcopy)
+    out.sort(key=lambda d: (d["year"], d["month"]), reverse=True)
+    return out
 
 HEX_RE = re.compile(r"^#([0-9A-Fa-f]{6})$")
 
@@ -1006,6 +1057,48 @@ async def settings_post(
     if is_initialized():
         append_settings_to_ledger(s)
     return RedirectResponse("/settings", 303)
+
+@app.get("/summary", response_class=HTMLResponse)
+async def summary_get(request: Request):
+    guard = ensure_setup_page()
+    if guard: return guard
+
+    s = get_settings()
+    lang = s["language"]
+    t = t_for(lang)
+    currency = s["currency"]
+    tz_name = s["timezone"]
+
+    rows = read_movements()
+    deleted_ts = {d.target_ts for d in read_deletes()}
+    movs = [m for m in rows if m.kind == "movement" and m.timestamp not in deleted_ts]
+    groups = group_movements_by_month(movs, tz_name)
+
+    # Prepare display fields
+    def month_label(y: int, m: int) -> str:
+        # Use YYYY-MM label, could be enhanced for locale later
+        return f"{y}-{m:02d}"
+
+    display_groups = []
+    for g in groups:
+        display_groups.append({
+            "year": g["year"],
+            "month": g["month"],
+            "label": month_label(g["year"], g["month"]),
+            "count": g["count"],
+            "total_change": g["total_change"],
+            "total_change_display": format_currency(g["total_change"], currency),
+            "is_in_progress": g["is_in_progress"],
+        })
+
+    return templates.TemplateResponse("summary.html", {
+        "request": request,
+        "app_name": APP_NAME,
+        "theme": s["theme"],
+        "t": t,
+        "lang": lang,
+        "groups": display_groups,
+    })
 
 @app.get("/healthz")
 async def health():

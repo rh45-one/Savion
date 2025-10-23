@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block content %}
+
+<section class="card">
+  <h3 style="margin-top:0">{{ t.summary_title }}</h3>
+
+  <div class="table">
+    <div class="row header">
+      <div class="cell">{{ t.summary_month }}</div>
+      <div class="cell">{{ t.summary_total_change }}</div>
+      <div class="cell">{{ t.summary_entries }}</div>
+    </div>
+
+    {% for g in groups %}
+      <div class="row">
+        <div class="cell" data-label="{{ t.summary_month }}">
+          {{ g.label }}
+          {% if g.is_in_progress %}
+            <small class="muted" style="margin-left:6px;">(in progress)</small>
+          {% endif %}
+        </div>
+        <div class="cell" data-label="{{ t.summary_total_change }}">{{ g.total_change_display }}</div>
+        <div class="cell" data-label="{{ t.summary_entries }}">{{ g.count }}</div>
+      </div>
+    {% else %}
+      <div class="row">
+        <div class="cell">—</div>
+      </div>
+    {% endfor %}
+  </div>
+</section>
+
+{% endblock %}
