@@ -146,6 +146,7 @@ EN_TRANSLATIONS: Dict[str, str] = {
     "summary_month": "Month",
     "summary_total_change": "Net change",
     "summary_entries": "Entries",
+    "summary_in_progress": "In progress",
 }
 
 TRANSLATIONS_PATH = os.path.join(BASE_DIR, "translations.json")
@@ -1074,21 +1075,58 @@ async def summary_get(request: Request):
     movs = [m for m in rows if m.kind == "movement" and m.timestamp not in deleted_ts]
     groups = group_movements_by_month(movs, tz_name)
 
-    # Prepare display fields
+    # Prepare tag color map
+    tag_types = s.get("tag_types", [])
+    tag_color_map = { (t["name"] or "").strip().lower(): t.get("color", "#777777") for t in tag_types }
+
+    # Helper for month label like "October 2025"
     def month_label(y: int, m: int) -> str:
-        # Use YYYY-MM label, could be enhanced for locale later
-        return f"{y}-{m:02d}"
+        try:
+            d = datetime.date(y, m, 1)
+            return d.strftime("%B %Y")
+        except Exception:
+            return f"{y}-{m:02d}"
+
+    # Build mapping from (y,m) to displayed movement rows
+    grouped_movs: Dict[tuple[int,int], List[Dict[str, Any]]] = {}
+    for m in movs:
+        y, mo = year_month_from_ts(m.timestamp, tz_name)
+        key = (y, mo)
+        lst = grouped_movs.get(key)
+        if lst is None:
+            lst = []
+            grouped_movs[key] = lst
+        action_label = t["action_add"] if m.action == "add" else t["action_withdraw"]
+        tags_display = []
+        for tag in (m.tags or []):
+            nm = (tag or "").strip()
+            color = tag_color_map.get(nm.lower(), "#777777")
+            tags_display.append({"name": nm, "color": color})
+        lst.append({
+            "ts_raw": m.timestamp,
+            "timestamp_display": format_display_date(m.timestamp, tz_name),
+            "action_display": action_label,
+            "action": (m.action or ""),
+            "amount_display": format_currency(float(m.amount or 0.0), currency),
+            "amount_value": float(m.amount or 0.0),
+            "description": m.description or "",
+            "tags": tags_display,
+        })
 
     display_groups = []
     for g in groups:
+        key = (g["year"], g["month"])
+        key_str = f"{g['year']}-{g['month']:02d}"
         display_groups.append({
             "year": g["year"],
             "month": g["month"],
+            "key": key_str,
             "label": month_label(g["year"], g["month"]),
             "count": g["count"],
             "total_change": g["total_change"],
             "total_change_display": format_currency(g["total_change"], currency),
             "is_in_progress": g["is_in_progress"],
+            "movements": grouped_movs.get(key, []),
         })
 
     return templates.TemplateResponse("summary.html", {

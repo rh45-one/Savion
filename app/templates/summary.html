@@ -4,30 +4,91 @@
 <section class="card">
   <h3 style="margin-top:0">{{ t.summary_title }}</h3>
 
-  <div class="table">
-    <div class="row header">
-      <div class="cell">{{ t.summary_month }}</div>
-      <div class="cell">{{ t.summary_total_change }}</div>
-      <div class="cell">{{ t.summary_entries }}</div>
-    </div>
-
+  <div class="summary-list" role="list">
     {% for g in groups %}
-      <div class="row">
-        <div class="cell" data-label="{{ t.summary_month }}">
-          {{ g.label }}
-          {% if g.is_in_progress %}
-            <small class="muted" style="margin-left:6px;">(in progress)</small>
+      {% set is_pos = g.total_change >= 0 %}
+      <div class="summary-card" role="button" tabindex="0" aria-expanded="false" data-key="{{ g.key }}" aria-controls="content-{{ g.key }}">
+        <div class="summary-header">
+          <div class="summary-left">
+            <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M8.59,16.58L13.17,12L8.59,7.41L10,6l6,6l-6,6L8.59,16.58z"/></svg>
+            <div class="summary-title">
+            <span class="month-label">{{ g.label }}</span>
+            {% if g.is_in_progress %}
+              <span class="tag-inprogress">{{ t.summary_in_progress }}</span>
+            {% endif %}
+            </div>
+            <span class="amount amount-badge {{ 'amount-positive' if is_pos else 'amount-negative' }} summary-amount-inline">
+              {% if is_pos %}+{% endif %}{{ g.total_change_display }}
+            </span>
+          <div class="summary-meta">
+            <span class="entries-pill">{{ g.count }}</span>
+          </div>
+        </div>
+        <div id="content-{{ g.key }}" class="summary-content" hidden aria-hidden="true">
+          <div class="summary-mov-header">
+            <span class="col-ts">{{ t.table_date }}</span>
+            <span class="col-action">{{ t.table_action }}</span>
+            <span class="col-amount">{{ t.table_amount }}</span>
+          </div>
+          {% if g.movements and g.movements|length > 0 %}
+            <div class="summary-mov-list">
+              {% for m in g.movements %}
+                <div class="summary-mov-row">
+                  <div class="mov-line-1">
+                    <span class="mov-ts">{{ m.timestamp_display }}</span>
+                    <span class="mov-action action-pill {{ 'action-add' if m.action == 'add' else 'action-withdraw' }}">{{ m.action_display }}</span>
+                    {% set mov_pos = m.amount_value >= 0 %}
+                    <span class="mov-amount {{ 'amount-positive' if mov_pos else 'amount-negative' }}">{{ m.amount_display }}</span>
+                  </div>
+                  {% if m.description %}
+                    <div class="mov-desc">{{ m.description }}</div>
+                  {% endif %}
+                  {% if m.tags and m.tags|length > 0 %}
+                    <div class="mov-tags">
+                      {% for tg in m.tags %}
+                        <span class="tag-chip" style="background: {{ tg.color }};">{{ tg.name }}</span>
+                      {% endfor %}
+                    </div>
+                  {% endif %}
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <div class="muted">—</div>
           {% endif %}
         </div>
-        <div class="cell" data-label="{{ t.summary_total_change }}">{{ g.total_change_display }}</div>
-        <div class="cell" data-label="{{ t.summary_entries }}">{{ g.count }}</div>
       </div>
     {% else %}
-      <div class="row">
-        <div class="cell">—</div>
-      </div>
+      <div class="summary-empty muted">—</div>
     {% endfor %}
   </div>
 </section>
+
+<script>
+  (function(){
+    function toggle(card){
+      var content = card.querySelector('.summary-content');
+      var expanded = card.getAttribute('aria-expanded') === 'true';
+      var next = !expanded;
+      card.setAttribute('aria-expanded', String(next));
+      if (content){
+        content.hidden = !next;
+        content.setAttribute('aria-hidden', String(!next));
+      }
+    }
+    document.querySelectorAll('.summary-card').forEach(function(card){
+      card.addEventListener('click', function(e){
+        // Ignore clicks on focusable children in future
+        toggle(card);
+      });
+      card.addEventListener('keydown', function(e){
+        if (e.key === 'Enter' || e.key === ' '){
+          e.preventDefault();
+          toggle(card);
+        }
+      });
+    });
+  })();
+  </script>
 
 {% endblock %}
