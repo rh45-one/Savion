@@ -98,7 +98,17 @@
 
     "footer_tagline": "Gestor de dinero sencillo y local.",
     "nav_open_menu": "Abrir menú",
-    "nav_close_menu": "Cerrar menú"
+    "nav_close_menu": "Cerrar menú",
+    "nav_summary": "Resumen",
+    "recent_display_label": "Mostrar",
+    "recent_display_all": "Todos",
+    "delete": "Eliminar",
+    "delete_confirm": "Confirmar eliminación",
+    "summary_title": "Resúmenes mensuales",
+    "summary_month": "Mes",
+    "summary_total_change": "Cambio neto",
+    "summary_entries": "Entradas",
+    "summary_in_progress": "En curso"
   },
 
   "fr": {
@@ -200,7 +210,17 @@
 
     "footer_tagline": "Suivi d’argent simple et local.",
     "nav_open_menu": "Ouvrir le menu",
-    "nav_close_menu": "Fermer le menu"
+    "nav_close_menu": "Fermer le menu",
+    "nav_summary": "Résumé",
+    "recent_display_label": "Afficher",
+    "recent_display_all": "Tous",
+    "delete": "Supprimer",
+    "delete_confirm": "Confirmer la suppression",
+    "summary_title": "Synthèses mensuelles",
+    "summary_month": "Mois",
+    "summary_total_change": "Variation nette",
+    "summary_entries": "Entrées",
+    "summary_in_progress": "En cours"
   },
 
   "zh": {
@@ -302,7 +322,17 @@
 
     "footer_tagline": "简洁、本地优先的记账器。",
     "nav_open_menu": "打开菜单",
-    "nav_close_menu": "关闭菜单"
+    "nav_close_menu": "关闭菜单",
+    "nav_summary": "汇总",
+    "recent_display_label": "显示",
+    "recent_display_all": "全部",
+    "delete": "删除",
+    "delete_confirm": "确认删除",
+    "summary_title": "每月汇总",
+    "summary_month": "月份",
+    "summary_total_change": "净变动",
+    "summary_entries": "条目",
+    "summary_in_progress": "进行中"
   },
 
   "pt": {
@@ -404,7 +434,17 @@
 
     "footer_tagline": "Controle de dinheiro simples e local-first.",
     "nav_open_menu": "Abrir menu",
-    "nav_close_menu": "Fechar menu"
+    "nav_close_menu": "Fechar menu",
+    "nav_summary": "Resumo",
+    "recent_display_label": "Mostrar",
+    "recent_display_all": "Todos",
+    "delete": "Excluir",
+    "delete_confirm": "Confirmar exclusão",
+    "summary_title": "Resumos mensais",
+    "summary_month": "Mês",
+    "summary_total_change": "Variação líquida",
+    "summary_entries": "Lançamentos",
+    "summary_in_progress": "Em andamento"
   },
 
   "ja": {
@@ -506,7 +546,17 @@
 
     "footer_tagline": "シンプルでローカル優先のマネートラッカー。",
     "nav_open_menu": "メニューを開く",
-    "nav_close_menu": "メニューを閉じる"
+    "nav_close_menu": "メニューを閉じる",
+    "nav_summary": "サマリー",
+    "recent_display_label": "表示",
+    "recent_display_all": "すべて",
+    "delete": "削除",
+    "delete_confirm": "削除を確認",
+    "summary_title": "月次サマリー",
+    "summary_month": "月",
+    "summary_total_change": "純増減",
+    "summary_entries": "件数",
+    "summary_in_progress": "進行中"
   },
 
   "de": {
@@ -608,7 +658,17 @@
 
     "footer_tagline": "Einfacher, lokal-first Geld-Tracker.",
     "nav_open_menu": "Menü öffnen",
-    "nav_close_menu": "Menü schließen"
+    "nav_close_menu": "Menü schließen",
+    "nav_summary": "Übersicht",
+    "recent_display_label": "Anzeigen",
+    "recent_display_all": "Alle",
+    "delete": "Löschen",
+    "delete_confirm": "Löschen bestätigen",
+    "summary_title": "Monatliche Zusammenfassungen",
+    "summary_month": "Monat",
+    "summary_total_change": "Nettoänderung",
+    "summary_entries": "Buchungen",
+    "summary_in_progress": "In Bearbeitung"
   },
  
   "it": {
@@ -710,6 +770,16 @@
 
     "footer_tagline": "Tracciatore di denaro semplice e locale.",
     "nav_open_menu": "Apri menu",
-    "nav_close_menu": "Chiudi menu"
+    "nav_close_menu": "Chiudi menu",
+    "nav_summary": "Riepilogo",
+    "recent_display_label": "Mostra",
+    "recent_display_all": "Tutti",
+    "delete": "Elimina",
+    "delete_confirm": "Conferma eliminazione",
+    "summary_title": "Riepiloghi mensili",
+    "summary_month": "Mese",
+    "summary_total_change": "Variazione netta",
+    "summary_entries": "Voci",
+    "summary_in_progress": "In corso"
   }
 }
