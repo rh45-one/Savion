@@ -596,7 +596,7 @@ button.tag-remove[disabled] { opacity: .5; cursor: not-allowed; }
   border-radius: 14px;
   background: var(--panel);
   padding: 14px 16px;
-  cursor: pointer;
+  cursor: default;
   box-shadow: 0 4px 16px rgba(0,0,0,0.06);
 }
 .summary-card:hover { background: var(--soft); }
@@ -607,7 +607,7 @@ button.tag-remove[disabled] { opacity: .5; cursor: not-allowed; }
 .summary-header {
   display: flex;
   align-items: baseline;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 10px;
   flex-wrap: wrap;
 }
@@ -672,16 +672,45 @@ button.tag-remove[disabled] { opacity: .5; cursor: not-allowed; }
 .action-withdraw { background: rgba(255,107,107,0.18); color: var(--danger); }
 .mov-amount { font-weight: 800; text-align: right; font-variant-numeric: tabular-nums; justify-self: end; }
 .mov-desc { margin-top: 4px; }
-.mov-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.mov-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+
+/* Readability improvements in Summary details */
+.summary-mov-row .mov-desc {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text);
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  hyphens: auto;
+}
+.summary-mov-row .mov-tags .tag-chip {
+  padding: 5px 10px;
+  font-size: 12px;
+  line-height: 1;
+  color: #fff; /* ensure high contrast */
+  text-shadow: 0 1px 1px rgba(0,0,0,0.35);
+  border: 1px solid rgba(0,0,0,0.15);
+}
 
 @media (max-width: 640px) {
   .summary-mov-header { display: none; }
   .summary-header { align-items: center; }
   .summary-left { gap: 8px; }
-  .summary-amount-inline { margin-left: auto; }
-  .summary-meta { width: 100%; justify-content: flex-end; }
+  /* Keep title and amount left-aligned and allow wrapping on small screens */
+  .summary-amount-inline { display: block; margin-left: 0; margin-top: 4px; }
+  .summary-meta { width: 100%; justify-content: flex-start; }
   .summary-content { margin-left: 16px; }
-  .mov-line-1 { grid-template-columns: 1fr auto; }
-  .action-pill { order: 3; justify-self: start; }
-  .mov-amount { order: 2; }
+  /* Reflow monthly movement line with explicit grid areas for better control */
+  .mov-line-1 {
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      "ts amt"
+      "action action";
+  }
+  .mov-ts { grid-area: ts; }
+  .mov-amount { grid-area: amt; text-align: right; }
+  .action-pill { grid-area: action; justify-self: start; }
 }
+
+/* Prevent unexpected overflow inside row grid columns */
+.mov-line-1 > * { min-width: 0; }
