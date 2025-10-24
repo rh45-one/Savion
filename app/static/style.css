@@ -706,10 +706,20 @@ button.tag-remove[disabled] { opacity: .5; cursor: not-allowed; }
 @media (max-width: 640px) {
   .summary-mov-header { display: none; }
   .summary-header { align-items: center; }
-  .summary-left { gap: 8px; }
-  /* Keep title and amount left-aligned and allow wrapping on small screens */
-  .summary-amount-inline { display: block; margin-left: 0; margin-top: 4px; }
-  .summary-meta { width: 100%; justify-content: flex-start; }
+  /* Lay out month (left) and amount (right) on the first row; entries on the second */
+  .summary-left {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      "title amount"
+      "meta  meta";
+    gap: 6px 10px;
+    align-items: baseline;
+    min-width: 0;
+  }
+  .summary-title { grid-area: title; min-width: 0; }
+  .summary-amount-inline { grid-area: amount; margin-left: 0; margin-top: 0; text-align: right; }
+  .summary-meta { grid-area: meta; width: 100%; justify-content: flex-start; }
   .summary-content { margin-left: 16px; }
   /* Reflow monthly movement line with explicit grid areas for better control */
   .mov-line-1 {
