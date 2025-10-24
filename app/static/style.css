@@ -10,6 +10,10 @@
   --danger: #ff6b6b;
   --ok: #7ad47a;
   --border: #1e232a;
+  /* Theme tints (used for subtle status backgrounds) */
+  --ok-tint: rgba(122, 212, 122, 0.18);
+  --danger-tint: rgba(255, 107, 107, 0.18);
+  --accent-tint: rgba(82, 168, 255, 0.12);
 }
 :root[data-theme="light"] {
   --bg: #f7f9fb;
@@ -22,6 +26,10 @@
   --danger: #e25757;
   --ok: #2e8f2e;
   --border: #e6e9ee;
+  /* Slightly lighter tints on light theme for readable contrast */
+  --ok-tint: rgba(46, 143, 46, 0.12);
+  --danger-tint: rgba(226, 87, 87, 0.12);
+  --accent-tint: rgba(42, 126, 240, 0.12);
 }
 /* Dracula theme */
 :root[data-theme="dracula"] {
@@ -35,6 +43,9 @@
   --danger: #ff5555;    /* red */
   --ok: #50fa7b;        /* green */
   --border: #44475a;    /* border */
+  --ok-tint: rgba(80, 250, 123, 0.18);
+  --danger-tint: rgba(255, 85, 85, 0.18);
+  --accent-tint: rgba(189, 147, 249, 0.18);
 }
 
 /* BASE */
@@ -126,7 +137,7 @@ html, body {
 
 /* Cards & Forms */
 .card {
-  background: var(--panel);
+  background: var(--card);
   border: 1px solid var(--border);
   padding: 16px;
   border-radius: 12px;
@@ -594,7 +605,7 @@ button.tag-remove[disabled] { opacity: .5; cursor: not-allowed; }
 .summary-card {
   border: 1px solid var(--border);
   border-radius: 14px;
-  background: var(--panel);
+  background: var(--card);
   padding: 14px 16px;
   cursor: default;
   box-shadow: 0 4px 16px rgba(0,0,0,0.06);
@@ -616,7 +627,7 @@ button.tag-remove[disabled] { opacity: .5; cursor: not-allowed; }
 .tag-inprogress {
   font-size: 12px;
   color: var(--accent);
-  background: rgba(82,168,255,0.12);
+  background: var(--accent-tint);
   padding: 2px 8px;
   border-radius: 999px;
 }
@@ -668,8 +679,8 @@ button.tag-remove[disabled] { opacity: .5; cursor: not-allowed; }
 }
 .mov-ts { color: var(--muted); font-size: 12px; }
 .action-pill { font-weight: 700; font-size: 12px; padding: 2px 8px; border-radius: 999px; }
-.action-add { background: rgba(122,212,122,0.18); color: var(--ok); }
-.action-withdraw { background: rgba(255,107,107,0.18); color: var(--danger); }
+.action-add { background: var(--ok-tint); color: var(--ok); }
+.action-withdraw { background: var(--danger-tint); color: var(--danger); }
 .mov-amount { font-weight: 800; text-align: right; font-variant-numeric: tabular-nums; justify-self: end; }
 .mov-desc { margin-top: 4px; }
 .mov-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }

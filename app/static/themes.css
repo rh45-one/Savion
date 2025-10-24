@@ -61,6 +61,7 @@
 :root[data-theme="winclassic"] {
   /* Desktop + window colors */
   --bg: #008080;            /* teal desktop */
+  --panel: #ECE9D8;         /* map panel to window background */
   --card: #ECE9D8;          /* window background */
   --soft: #D4D0C8;          /* button face / panel */
   --text: #000000;
@@ -265,6 +266,7 @@
 :root[data-theme="system1"] {
   /* Only black & white */
   --bg: #FFFFFF;
+  --panel: #FFFFFF;   /* ensure panel maps to white in monochrome theme */
   --card: #FFFFFF;
   --soft: #FFFFFF;
   --text: #000000;
