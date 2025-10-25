@@ -108,7 +108,9 @@
     "summary_month": "Mes",
     "summary_total_change": "Cambio neto",
     "summary_entries": "Entradas",
-    "summary_in_progress": "En curso"
+  "summary_in_progress": "En curso",
+  "summary_income": "Ingresos",
+  "summary_expenses": "Gastos"
   },
 
   "fr": {
@@ -220,7 +222,9 @@
     "summary_month": "Mois",
     "summary_total_change": "Variation nette",
     "summary_entries": "Entrées",
-    "summary_in_progress": "En cours"
+  "summary_in_progress": "En cours",
+  "summary_income": "Revenus",
+  "summary_expenses": "Dépenses"
   },
 
   "zh": {
@@ -332,7 +336,9 @@
     "summary_month": "月份",
     "summary_total_change": "净变动",
     "summary_entries": "条目",
-    "summary_in_progress": "进行中"
+  "summary_in_progress": "进行中",
+  "summary_income": "收入",
+  "summary_expenses": "支出"
   },
 
   "pt": {
@@ -444,7 +450,9 @@
     "summary_month": "Mês",
     "summary_total_change": "Variação líquida",
     "summary_entries": "Lançamentos",
-    "summary_in_progress": "Em andamento"
+  "summary_in_progress": "Em andamento",
+  "summary_income": "Receitas",
+  "summary_expenses": "Despesas"
   },
 
   "ja": {
@@ -556,7 +564,9 @@
     "summary_month": "月",
     "summary_total_change": "純増減",
     "summary_entries": "件数",
-    "summary_in_progress": "進行中"
+  "summary_in_progress": "進行中",
+  "summary_income": "収入",
+  "summary_expenses": "支出"
   },
 
   "de": {
@@ -668,7 +678,9 @@
     "summary_month": "Monat",
     "summary_total_change": "Nettoänderung",
     "summary_entries": "Buchungen",
-    "summary_in_progress": "In Bearbeitung"
+  "summary_in_progress": "In Bearbeitung",
+  "summary_income": "Einnahmen",
+  "summary_expenses": "Ausgaben"
   },
  
   "it": {
@@ -780,6 +792,8 @@
     "summary_month": "Mese",
     "summary_total_change": "Variazione netta",
     "summary_entries": "Voci",
-    "summary_in_progress": "In corso"
+  "summary_in_progress": "In corso",
+  "summary_income": "Entrate",
+  "summary_expenses": "Spese"
   }
 }
