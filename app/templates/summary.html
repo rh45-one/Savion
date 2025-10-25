@@ -7,9 +7,10 @@
   <div class="summary-list" role="list">
     {% for g in groups %}
       {% set is_pos = g.total_change >= 0 %}
-      <div class="summary-card">
+      <div class="summary-card" role="button" tabindex="0" aria-expanded="false" aria-controls="content-{{ g.key }}" data-key="{{ g.key }}">
         <div class="summary-header">
           <div class="summary-left">
+            <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M8.59,16.58L13.17,12L8.59,7.41L10,6l6,6l-6,6L8.59,16.58z"/></svg>
             <div class="summary-title">
               <span class="month-label">{{ g.label }}</span>
               {% if g.is_in_progress %}
@@ -25,10 +26,44 @@
           </div>
         </div>
       </div>
+      <div id="content-{{ g.key }}" class="summary-content" hidden aria-hidden="true">
+        <div class="summary-totals">
+          <div class="total-row">
+            <span class="label">{{ t.summary_income }}</span>
+            <span class="amount amount-positive">{{ g.total_income_display }}</span>
+          </div>
+          <div class="total-row">
+            <span class="label">{{ t.summary_expenses }}</span>
+            <span class="amount amount-negative">{{ g.total_expenses_display }}</span>
+          </div>
+        </div>
+      </div>
     {% else %}
       <div class="summary-empty muted">—</div>
     {% endfor %}
   </div>
 </section>
+
+<script>
+  (function(){
+    function toggle(card){
+      var key = card.getAttribute('data-key');
+      var content = document.getElementById('content-' + key);
+      var expanded = card.getAttribute('aria-expanded') === 'true';
+      var next = !expanded;
+      card.setAttribute('aria-expanded', String(next));
+      if (content){
+        content.hidden = !next;
+        content.setAttribute('aria-hidden', String(!next));
+      }
+    }
+    document.querySelectorAll('.summary-card[role="button"]').forEach(function(card){
+      card.addEventListener('click', function(){ toggle(card); });
+      card.addEventListener('keydown', function(e){
+        if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); toggle(card); }
+      });
+    });
+  })();
+  </script>
 
 {% endblock %}

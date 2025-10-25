@@ -607,7 +607,7 @@ button.tag-remove[disabled] { opacity: .5; cursor: not-allowed; }
   border-radius: 14px;
   background: var(--card);
   padding: 14px 16px;
-  cursor: default;
+  cursor: pointer;
   box-shadow: 0 4px 16px rgba(0,0,0,0.06);
 }
 .summary-card:hover { background: var(--soft); }
@@ -732,6 +732,17 @@ button.tag-remove[disabled] { opacity: .5; cursor: not-allowed; }
   .mov-amount { grid-area: amt; text-align: right; }
   .action-pill { grid-area: action; justify-self: start; }
 }
+
+/* Totals section layout inside expanded monthly card */
+.summary-totals { display: grid; gap: 8px; }
+.summary-totals .total-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: baseline;
+  gap: 8px;
+}
+.summary-totals .label { color: var(--muted); font-weight: 700; }
+.summary-totals .amount { font-weight: 800; font-variant-numeric: tabular-nums; }
 
 /* Prevent unexpected overflow inside row grid columns */
 .mov-line-1 > * { min-width: 0; }

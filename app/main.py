@@ -147,6 +147,8 @@ EN_TRANSLATIONS: Dict[str, str] = {
     "summary_total_change": "Net change",
     "summary_entries": "Entries",
     "summary_in_progress": "In progress",
+    "summary_income": "Income",
+    "summary_expenses": "Expenses",
 }
 
 TRANSLATIONS_PATH = os.path.join(BASE_DIR, "translations.json")
@@ -1117,6 +1119,10 @@ async def summary_get(request: Request):
     for g in groups:
         key = (g["year"], g["month"])
         key_str = f"{g['year']}-{g['month']:02d}"
+        month_movs = grouped_movs.get(key, [])
+        # Compute monthly income (adds) and expenses (withdrawals) as positive sums
+        total_income_val = round(sum(r.get("amount_value", 0.0) for r in month_movs if r.get("action") == "add"), 2)
+        total_expenses_val = round(sum(r.get("amount_value", 0.0) for r in month_movs if r.get("action") == "withdraw"), 2)
         display_groups.append({
             "year": g["year"],
             "month": g["month"],
@@ -1126,7 +1132,11 @@ async def summary_get(request: Request):
             "total_change": g["total_change"],
             "total_change_display": format_currency(g["total_change"], currency),
             "is_in_progress": g["is_in_progress"],
-            "movements": grouped_movs.get(key, []),
+            "movements": month_movs,
+            "total_income": total_income_val,
+            "total_expenses": total_expenses_val,
+            "total_income_display": format_currency(total_income_val, currency),
+            "total_expenses_display": format_currency(total_expenses_val, currency),
         })
 
     return templates.TemplateResponse("summary.html", {
