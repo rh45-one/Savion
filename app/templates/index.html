@@ -38,7 +38,7 @@
         <option value="add">{{ t.action_add }}</option>
         <option value="withdraw">{{ t.action_withdraw }}</option>
       </select>
-      <span class="field-error" id="movement-action-error" data-role="action-error" hidden role="alert" aria-live="polite">{{ t.error_action_required }}</span>
+      <span class="field-error" id="movement-action-error" data-role="action-error" hidden role="alert" aria-live="polite" aria-hidden="true" style="display:none">{{ t.error_action_required }}</span>
     </label>
 
     <label>{{ t.form_amount }}
@@ -58,7 +58,7 @@
             {% for tg in tag_types %}
               <label class="tag-option">
                 <input type="checkbox" name="tags" value="{{ tg.name }}">
-                <span class="tag-chip" style="background: {{ tg.color }};">{{ tg.name }}</span>
+                <span class="tag-chip" style="background: {{ tg.color }};">{{ tg.label or tg.name }}</span>
               </label>
             {% endfor %}
           </div>
@@ -372,14 +372,22 @@
     if (!movementForm) return;
     var actionSelect = movementForm.querySelector('select[name="action"]');
     var errorEl = movementForm.querySelector('[data-role="action-error"]');
+    var attemptedSubmit = false;
 
     function showError() {
-      if (errorEl) errorEl.hidden = false;
+      if (!errorEl || !attemptedSubmit) return;
+      errorEl.hidden = false;
+      errorEl.style.display = '';
+      errorEl.removeAttribute('aria-hidden');
       if (actionSelect) actionSelect.setAttribute('aria-invalid', 'true');
     }
 
     function hideError() {
-      if (errorEl) errorEl.hidden = true;
+      if (errorEl) {
+        errorEl.hidden = true;
+        errorEl.style.display = 'none';
+        errorEl.setAttribute('aria-hidden', 'true');
+      }
       if (actionSelect) actionSelect.removeAttribute('aria-invalid');
     }
 
@@ -391,10 +399,16 @@
       actionSelect.addEventListener('change', function () {
         if (hasSelection()) hideError();
       });
+      actionSelect.addEventListener('invalid', function (event) {
+        event.preventDefault();
+        attemptedSubmit = true;
+        if (!hasSelection()) showError();
+      });
     }
 
     movementForm.addEventListener('submit', function (e) {
       if (!hasSelection()) {
+        attemptedSubmit = true;
         e.preventDefault();
         showError();
         if (actionSelect) actionSelect.focus();
@@ -402,6 +416,8 @@
       }
       hideError();
     });
+
+    hideError();
   })();
 </script>
 
