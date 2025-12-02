@@ -1205,16 +1205,23 @@ async def summary_get(request: Request):
         key = (g["year"], g["month"])
         key_str = f"{g['year']}-{g['month']:02d}"
         month_movs = grouped_movs.get(key, [])
+        summary_movs = [r for r in month_movs if not has_system_balance_tag(r.get("tags_raw"))]
+
+        def net_amount(row: Dict[str, Any]) -> float:
+            amt = float(row.get("amount_value", 0.0))
+            return -amt if row.get("action") == "withdraw" else amt
+
+        total_change_val = round(sum(net_amount(r) for r in summary_movs), 2)
         # Compute monthly income (adds) and expenses (withdrawals) as positive sums
         total_income_val = round(sum(
             r.get("amount_value", 0.0)
-            for r in month_movs
-            if r.get("action") == "add" and not has_system_balance_tag(r.get("tags_raw"))
+            for r in summary_movs
+            if r.get("action") == "add"
         ), 2)
         total_expenses_val = round(sum(
             r.get("amount_value", 0.0)
-            for r in month_movs
-            if r.get("action") == "withdraw" and not has_system_balance_tag(r.get("tags_raw"))
+            for r in summary_movs
+            if r.get("action") == "withdraw"
         ), 2)
         display_groups.append({
             "year": g["year"],
@@ -1222,8 +1229,8 @@ async def summary_get(request: Request):
             "key": key_str,
             "label": month_label(g["year"], g["month"]),
             "count": g["count"],
-            "total_change": g["total_change"],
-            "total_change_display": format_currency(g["total_change"], currency),
+            "total_change": total_change_val,
+            "total_change_display": format_currency(total_change_val, currency),
             "is_in_progress": g["is_in_progress"],
             "movements": month_movs,
             "total_income": total_income_val,
