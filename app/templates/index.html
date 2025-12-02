@@ -33,10 +33,12 @@
   <h3 style="margin-top:0">{{ t.section_add_withdraw }}</h3>
   <form action="/movement" method="post" class="form-grid">
     <label>{{ t.form_action }}
-      <select name="action" required>
+      <select name="action" id="movement-action" required aria-describedby="movement-action-error">
+        <option value="" selected disabled>{{ t.action_select_placeholder }}</option>
         <option value="add">{{ t.action_add }}</option>
         <option value="withdraw">{{ t.action_withdraw }}</option>
       </select>
+      <span class="field-error" id="movement-action-error" data-role="action-error" hidden role="alert" aria-live="polite">{{ t.error_action_required }}</span>
     </label>
 
     <label>{{ t.form_amount }}
@@ -363,6 +365,42 @@
         var within = e.target.closest('.edit-form, .edit-btn');
         if (!within) closeForm(cell);
       });
+    });
+  })();
+  (function () {
+    var movementForm = document.querySelector('form[action="/movement"]');
+    if (!movementForm) return;
+    var actionSelect = movementForm.querySelector('select[name="action"]');
+    var errorEl = movementForm.querySelector('[data-role="action-error"]');
+
+    function showError() {
+      if (errorEl) errorEl.hidden = false;
+      if (actionSelect) actionSelect.setAttribute('aria-invalid', 'true');
+    }
+
+    function hideError() {
+      if (errorEl) errorEl.hidden = true;
+      if (actionSelect) actionSelect.removeAttribute('aria-invalid');
+    }
+
+    function hasSelection() {
+      return actionSelect && actionSelect.value;
+    }
+
+    if (actionSelect) {
+      actionSelect.addEventListener('change', function () {
+        if (hasSelection()) hideError();
+      });
+    }
+
+    movementForm.addEventListener('submit', function (e) {
+      if (!hasSelection()) {
+        e.preventDefault();
+        showError();
+        if (actionSelect) actionSelect.focus();
+        return;
+      }
+      hideError();
     });
   })();
 </script>

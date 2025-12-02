@@ -6,7 +6,8 @@
     "nav_reset": "Restablecer",
     "balance_current": "Saldo actual",
     "section_add_withdraw": "Añadir / Retirar",
-    "form_action": "Acción",
+  "form_action": "Acción",
+  "action_select_placeholder": "Selecciona una acción",
     "action_add": "Añadir",
     "action_withdraw": "Retirar",
     "form_amount": "Cantidad",
@@ -74,7 +75,8 @@
 
     "no_tags_defined": "No hay etiquetas definidas — añade algunas en Ajustes.",
     "placeholder_example_tag": "p. ej., Supermercado",
-    "error_invalid_timezone": "⚠️ Zona horaria no válida.",
+  "error_invalid_timezone": "⚠️ Zona horaria no válida.",
+  "error_action_required": "Selecciona el tipo de movimiento.",
 
     "setup_title": "Configuración",
     "setup_fresh_title": "Configuración nueva",
@@ -120,7 +122,8 @@
     "nav_reset": "Réinitialiser",
     "balance_current": "Solde actuel",
     "section_add_withdraw": "Ajouter / Retirer",
-    "form_action": "Action",
+  "form_action": "Action",
+  "action_select_placeholder": "Sélectionnez une action",
     "action_add": "Ajouter",
     "action_withdraw": "Retirer",
     "form_amount": "Montant",
@@ -188,7 +191,8 @@
 
     "no_tags_defined": "Aucune étiquette définie — ajoutez-en dans Réglages.",
     "placeholder_example_tag": "ex. Courses",
-    "error_invalid_timezone": "⚠️ Fuseau horaire invalide.",
+  "error_invalid_timezone": "⚠️ Fuseau horaire invalide.",
+  "error_action_required": "Sélectionnez le type de mouvement.",
 
     "setup_title": "Configuration",
     "setup_fresh_title": "Nouvelle configuration",
@@ -234,7 +238,8 @@
     "nav_reset": "重置",
     "balance_current": "当前余额",
     "section_add_withdraw": "存入 / 取出",
-    "form_action": "操作",
+  "form_action": "操作",
+  "action_select_placeholder": "请选择操作",
     "action_add": "存入",
     "action_withdraw": "取出",
     "form_amount": "金额",
@@ -302,7 +307,8 @@
 
     "no_tags_defined": "尚未定义标签 — 请在设置中添加。",
     "placeholder_example_tag": "例如：日用品",
-    "error_invalid_timezone": "⚠️ 时区无效。",
+  "error_invalid_timezone": "⚠️ 时区无效。",
+  "error_action_required": "请选择交易类型。",
 
     "setup_title": "设置",
     "setup_fresh_title": "新建",
@@ -348,7 +354,8 @@
     "nav_reset": "Redefinir",
     "balance_current": "Saldo atual",
     "section_add_withdraw": "Adicionar / Retirar",
-    "form_action": "Ação",
+  "form_action": "Ação",
+  "action_select_placeholder": "Selecione uma ação",
     "action_add": "Adicionar",
     "action_withdraw": "Retirar",
     "form_amount": "Valor",
@@ -416,7 +423,8 @@
 
     "no_tags_defined": "Nenhuma etiqueta definida — adicione algumas em Ajustes.",
     "placeholder_example_tag": "ex.: Mercado",
-    "error_invalid_timezone": "⚠️ Fuso horário inválido.",
+  "error_invalid_timezone": "⚠️ Fuso horário inválido.",
+  "error_action_required": "Selecione o tipo de movimentação.",
 
     "setup_title": "Configuração",
     "setup_fresh_title": "Nova configuração",
@@ -462,7 +470,8 @@
     "nav_reset": "リセット",
     "balance_current": "現在の残高",
     "section_add_withdraw": "入金 / 出金",
-    "form_action": "操作",
+  "form_action": "操作",
+  "action_select_placeholder": "操作を選択してください",
     "action_add": "入金",
     "action_withdraw": "出金",
     "form_amount": "金額",
@@ -530,7 +539,8 @@
 
     "no_tags_defined": "タグが未設定です — 設定で追加してください。",
     "placeholder_example_tag": "例：食料品",
-    "error_invalid_timezone": "⚠️ 無効なタイムゾーンです。",
+  "error_invalid_timezone": "⚠️ 無効なタイムゾーンです。",
+  "error_action_required": "入金か出金かを選択してください。",
 
     "setup_title": "セットアップ",
     "setup_fresh_title": "新規セットアップ",
@@ -576,7 +586,8 @@
     "nav_reset": "Zurücksetzen",
     "balance_current": "Aktueller Saldo",
     "section_add_withdraw": "Einzahlen / Abheben",
-    "form_action": "Aktion",
+  "form_action": "Aktion",
+  "action_select_placeholder": "Aktion auswählen",
     "action_add": "Einzahlen",
     "action_withdraw": "Abheben",
     "form_amount": "Betrag",
@@ -644,7 +655,8 @@
 
     "no_tags_defined": "Keine Schlagwörter definiert — fügen Sie welche unter Einstellungen hinzu.",
     "placeholder_example_tag": "z. B. Lebensmittel",
-    "error_invalid_timezone": "⚠️ Ungültige Zeitzone.",
+  "error_invalid_timezone": "⚠️ Ungültige Zeitzone.",
+  "error_action_required": "Wählen Sie einen Buchungstyp aus.",
 
     "setup_title": "Einrichtung",
     "setup_fresh_title": "Neue Einrichtung",
@@ -690,7 +702,8 @@
     "nav_reset": "Reimposta",
     "balance_current": "Saldo attuale",
     "section_add_withdraw": "Aggiungi / Preleva",
-    "form_action": "Azione",
+  "form_action": "Azione",
+  "action_select_placeholder": "Seleziona un’azione",
     "action_add": "Aggiungi",
     "action_withdraw": "Preleva",
     "form_amount": "Importo",
@@ -758,7 +771,8 @@
 
     "no_tags_defined": "Nessuna etichetta definita — aggiungine in Impostazioni.",
     "placeholder_example_tag": "es.: Spesa",
-    "error_invalid_timezone": "⚠️ Fuso orario non valido.",
+  "error_invalid_timezone": "⚠️ Fuso orario non valido.",
+  "error_action_required": "Seleziona il tipo di movimento.",
 
     "setup_title": "Configurazione",
     "setup_fresh_title": "Nuova configurazione",

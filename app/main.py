@@ -31,6 +31,7 @@ EN_TRANSLATIONS: Dict[str, str] = {
     "balance_current": "Current Balance",
     "section_add_withdraw": "Add / Withdraw",
     "form_action": "Action",
+    "action_select_placeholder": "Select an action",
     "action_add": "Add",
     "action_withdraw": "Withdraw",
     "form_amount": "Amount",
@@ -107,6 +108,7 @@ EN_TRANSLATIONS: Dict[str, str] = {
     "no_tags_defined": "No tags defined yet — add some in Settings.",
     "placeholder_example_tag": "e.g., Groceries",
     "error_invalid_timezone": "⚠️ Invalid timezone.",
+    "error_action_required": "Please select whether this is an add or withdraw.",
 
     # Setup page
     "setup_title": "Setup",
