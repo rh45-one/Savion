@@ -114,7 +114,7 @@
           {% for tg in tag_types %}
             <label class="tag-option">
               <input type="checkbox" name="tags" value="{{ tg.name }}" {% if tg.name in selected_tags %}checked{% endif %}>
-              <span class="tag-chip" style="background: {{ tg.color }};">{{ tg.name }}</span>
+              <span class="tag-chip" style="background: {{ tg.color }};">{{ tg.label or tg.name }}</span>
             </label>
           {% endfor %}
         </div>
@@ -173,7 +173,7 @@
               {% for tg in tag_types %}
                 <label class="tag-option">
                   <input type="checkbox" name="tags" value="{{ tg.name }}" {% if tg.name in r.tags_names %}checked{% endif %}>
-                  <span class="tag-chip" style="background: {{ tg.color }};">{{ tg.name }}</span>
+                  <span class="tag-chip" style="background: {{ tg.color }};">{{ tg.label or tg.name }}</span>
                 </label>
               {% endfor %}
             </div>
@@ -197,7 +197,7 @@
           {% if r.tags and r.tags|length > 0 %}
             <div class="tag-list">
               {% for tg in r.tags %}
-                <span class="tag-chip" style="background: {{ tg.color }};">{{ tg.name }}</span>
+                <span class="tag-chip" style="background: {{ tg.color }};">{{ tg.label or tg.name }}</span>
               {% endfor %}
             </div>
           {% endif %}

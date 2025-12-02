@@ -3,7 +3,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse, PlainTextResponse,
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
-from typing import Optional, List, Literal, Dict, Any
+from typing import Optional, List, Literal, Dict, Any, Set
 from zoneinfo import ZoneInfo
 import os, json, datetime, threading, random, re
 
@@ -16,6 +16,9 @@ os.makedirs(DATA_DIR, exist_ok=True)
 
 # --- Supported languages ---
 SUPPORTED_LANGS = ("en", "es", "fr", "zh", "pt", "ja", "de", "it")
+SYSTEM_TAG_VALUE = "__balance_adjust__"
+SYSTEM_TAG_VALUE_LOWER = SYSTEM_TAG_VALUE.lower()
+SYSTEM_TAG_COLOR = "#9C89FF"
 
 # --- English translations (fallback) ---
 EN_TRANSLATIONS: Dict[str, str] = {
@@ -31,6 +34,7 @@ EN_TRANSLATIONS: Dict[str, str] = {
     "balance_current": "Current Balance",
     "section_add_withdraw": "Add / Withdraw",
     "form_action": "Action",
+    "system_tag_balance_adjust": "Balance adjust",
     "action_select_placeholder": "Select an action",
     "action_add": "Add",
     "action_withdraw": "Withdraw",
@@ -346,6 +350,46 @@ def clean_tag_types(tt: Any) -> List[Dict[str, str]]:
         out.append({"name": name, "color": color})
     return out
 
+def merged_tag_types(settings_tags: List[Dict[str, str]], t: Dict[str, str]) -> List[Dict[str, str]]:
+    cleaned = clean_tag_types(settings_tags)
+    enriched: List[Dict[str, Any]] = []
+    seen: Set[str] = set()
+    for tag in cleaned:
+        name = (tag.get("name") or "").strip()
+        color = (tag.get("color") or "").strip() or "#777777"
+        if not name:
+            continue
+        key = name.lower()
+        if key == SYSTEM_TAG_VALUE_LOWER:
+            # Avoid collisions with manually created tag with same internal name
+            continue
+        enriched.append({
+            "name": name,
+            "color": color,
+            "label": name,
+            "is_system": False,
+        })
+        seen.add(key)
+
+    if SYSTEM_TAG_VALUE_LOWER not in seen:
+        enriched.append({
+            "name": SYSTEM_TAG_VALUE,
+            "color": SYSTEM_TAG_COLOR,
+            "label": t.get("system_tag_balance_adjust", "Balance adjust"),
+            "is_system": True,
+        })
+
+    return enriched
+
+def canonical_tag_value(tag: Optional[str]) -> str:
+    return (tag or "").strip()
+
+def is_system_balance_tag(tag: Optional[str]) -> bool:
+    return canonical_tag_value(tag).lower() == SYSTEM_TAG_VALUE_LOWER
+
+def has_system_balance_tag(tags: Optional[List[str]]) -> bool:
+    return any(is_system_balance_tag(tag) for tag in (tags or []))
+
 def is_initialized() -> bool:
     return os.path.exists(LEDGER_PATH) and os.path.getsize(LEDGER_PATH) > 0
 
@@ -540,8 +584,8 @@ async def index(request: Request):
     end_str = (qp.get("end") or "").strip()
     min_str = (qp.get("min") or "").strip()
     max_str = (qp.get("max") or "").strip()
-    selected_tags = qp.getlist("tags")
-    selected_tags = [s for s in (selected_tags or []) if s.strip()]
+    selected_tags_raw = qp.getlist("tags")
+    selected_tags = [canonical_tag_value(s) for s in (selected_tags_raw or []) if canonical_tag_value(s)]
     filters_open = any([q, action_filter in ("add", "withdraw"), start_str, end_str, min_str, max_str, selected_tags])
 
     # Movements display limit
@@ -577,8 +621,16 @@ async def index(request: Request):
     except Exception:
         pass
 
-    tag_types = settings.get("tag_types", [])
-    tag_color_map = { (t["name"] or "").strip().lower(): t.get("color", "#777777") for t in tag_types }
+    tag_types = merged_tag_types(settings.get("tag_types", []), t)
+    tag_meta_map: Dict[str, Dict[str, str]] = {}
+    for tag in tag_types:
+        key = canonical_tag_value(tag.get("name")).lower()
+        if not key:
+            continue
+        tag_meta_map[key] = {
+            "color": tag.get("color", "#777777"),
+            "label": tag.get("label") or canonical_tag_value(tag.get("name")),
+        }
 
     base_movs = [r for r in rows if r.kind == "movement" and r.timestamp not in deleted_ts_set]
 
@@ -635,10 +687,16 @@ async def index(request: Request):
     for r in display_rows:
         action_label = t["action_add"] if r.action == "add" else t["action_withdraw"]
         tags_display = []
+        tags_names: List[str] = []
         for tag in (r.tags or []):
-            key = (tag or "").strip().lower()
-            color = tag_color_map.get(key, "#777777")
-            tags_display.append({"name": tag, "color": color})
+            raw = canonical_tag_value(tag)
+            if not raw:
+                continue
+            tags_names.append(raw)
+            meta = tag_meta_map.get(raw.lower())
+            label = (meta.get("label") if meta else None) or raw
+            color = (meta.get("color") if meta else None) or "#777777"
+            tags_display.append({"name": label, "color": color})
         movements.append({
             "ts_raw": r.timestamp,  # identifier for edit target
             "timestamp_display": format_display_date(r.timestamp, tz_name),
@@ -647,7 +705,7 @@ async def index(request: Request):
             "balance_display": format_currency(float(per_move_balance.get(r.timestamp, r.resulting_balance or 0.0)), currency),
             "description": r.description or "",
             "tags": tags_display,
-            "tags_names": [tg["name"] for tg in tags_display]
+            "tags_names": tags_names
         })
 
     return templates.TemplateResponse("index.html", {
@@ -668,7 +726,7 @@ async def index(request: Request):
         "min_str": min_str,
         "max_str": max_str,
         "filters_open": filters_open,
-        "tag_types": tag_types,
+    "tag_types": tag_types,
         "selected_tags": selected_tags,
         "limit_selected": ("all" if limit is None else str(limit)),
     })
@@ -812,10 +870,15 @@ async def add_movement(
     norm_tags: List[str] = []
     seen = set()
     for tname in tags or []:
-        name = (tname or "").strip()
-        if not name: continue
+        name = canonical_tag_value(tname)
+        if not name:
+            continue
         key = name.lower()
-        if key in seen: continue
+        if key in seen:
+            continue
+        if key == SYSTEM_TAG_VALUE_LOWER:
+            name = SYSTEM_TAG_VALUE
+            key = SYSTEM_TAG_VALUE_LOWER
         seen.add(key)
         norm_tags.append(name)
 
@@ -848,10 +911,15 @@ async def edit_movement(
     norm_tags: List[str] = []
     seen = set()
     for tname in tags or []:
-        nm = (tname or "").strip()
-        if not nm: continue
+        nm = canonical_tag_value(tname)
+        if not nm:
+            continue
         key = nm.lower()
-        if key in seen: continue
+        if key in seen:
+            continue
+        if key == SYSTEM_TAG_VALUE_LOWER:
+            nm = SYSTEM_TAG_VALUE
+            key = SYSTEM_TAG_VALUE_LOWER
         seen.add(key)
         norm_tags.append(nm)
 
@@ -1080,8 +1148,16 @@ async def summary_get(request: Request):
     groups = group_movements_by_month(movs, tz_name)
 
     # Prepare tag color map
-    tag_types = s.get("tag_types", [])
-    tag_color_map = { (t["name"] or "").strip().lower(): t.get("color", "#777777") for t in tag_types }
+    tag_types = merged_tag_types(s.get("tag_types", []), t)
+    tag_meta_map: Dict[str, Dict[str, str]] = {}
+    for tag in tag_types:
+        key = canonical_tag_value(tag.get("name")).lower()
+        if not key:
+            continue
+        tag_meta_map[key] = {
+            "color": tag.get("color", "#777777"),
+            "label": tag.get("label") or canonical_tag_value(tag.get("name")),
+        }
 
     # Helper for month label like "October 2025"
     def month_label(y: int, m: int) -> str:
@@ -1102,10 +1178,16 @@ async def summary_get(request: Request):
             grouped_movs[key] = lst
         action_label = t["action_add"] if m.action == "add" else t["action_withdraw"]
         tags_display = []
+        raw_tags: List[str] = []
         for tag in (m.tags or []):
-            nm = (tag or "").strip()
-            color = tag_color_map.get(nm.lower(), "#777777")
-            tags_display.append({"name": nm, "color": color})
+            raw = canonical_tag_value(tag)
+            if not raw:
+                continue
+            raw_tags.append(raw)
+            meta = tag_meta_map.get(raw.lower())
+            label = (meta.get("label") if meta else None) or raw
+            color = (meta.get("color") if meta else None) or "#777777"
+            tags_display.append({"name": label, "color": color})
         lst.append({
             "ts_raw": m.timestamp,
             "timestamp_display": format_display_date(m.timestamp, tz_name),
@@ -1115,6 +1197,7 @@ async def summary_get(request: Request):
             "amount_value": float(m.amount or 0.0),
             "description": m.description or "",
             "tags": tags_display,
+            "tags_raw": raw_tags,
         })
 
     display_groups = []
@@ -1123,8 +1206,16 @@ async def summary_get(request: Request):
         key_str = f"{g['year']}-{g['month']:02d}"
         month_movs = grouped_movs.get(key, [])
         # Compute monthly income (adds) and expenses (withdrawals) as positive sums
-        total_income_val = round(sum(r.get("amount_value", 0.0) for r in month_movs if r.get("action") == "add"), 2)
-        total_expenses_val = round(sum(r.get("amount_value", 0.0) for r in month_movs if r.get("action") == "withdraw"), 2)
+        total_income_val = round(sum(
+            r.get("amount_value", 0.0)
+            for r in month_movs
+            if r.get("action") == "add" and not has_system_balance_tag(r.get("tags_raw"))
+        ), 2)
+        total_expenses_val = round(sum(
+            r.get("amount_value", 0.0)
+            for r in month_movs
+            if r.get("action") == "withdraw" and not has_system_balance_tag(r.get("tags_raw"))
+        ), 2)
         display_groups.append({
             "year": g["year"],
             "month": g["month"],
