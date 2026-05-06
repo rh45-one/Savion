@@ -145,4 +145,4 @@ Entries are validated when read; malformed lines are ignored.
 
 ## License
 
-MIT License — see `LICENSE` for full text.
+Creative Commons BY-NC-SA 4.0 — see `LICENSE` for full text.
