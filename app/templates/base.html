@@ -15,10 +15,17 @@
     <link rel="icon" type="image/png" sizes="192x192" href="/static/img/favicon-192x192.png">
     <link rel="apple-touch-icon" sizes="180x180" href="/static/img/apple-touch-icon.png">
   </head>
-  <body>
+  <body class="app-shell">
     <header class="topbar">
       <div class="container rowflex">
-        <h1>{{ app_name }}</h1>
+        <div class="brand-lockup">
+          <span class="brand-mark" aria-hidden="true">
+            <span class="brand-shape brand-circle"></span>
+            <span class="brand-shape brand-square"></span>
+            <span class="brand-shape brand-triangle"></span>
+          </span>
+          <h1>{{ app_name }}</h1>
+        </div>
 
         <!-- Mobile menu button (Pictogrammers MDI "menu") -->
         <button class="hamburger" aria-label="{{ t.nav_open_menu }}" aria-expanded="false" aria-controls="mobileMenu">
@@ -47,7 +54,7 @@
       </nav>
     </header>
 
-    <main class="container">
+    <main class="container page-shell {% block page_class %}{% endblock %}">
       {% if error %}
         <div class="alert" role="alert">{{ error }}</div>
       {% endif %}

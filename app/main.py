@@ -186,7 +186,7 @@ def t_for(lang: str) -> Dict[str, str]:
 
 # --- Default settings ---
 DEFAULT_SETTINGS = {
-    "theme": "dark",            # "dark" | "light" | "dracula" | "winclassic" | "system1"
+    "theme": "dark",            # See the theme allow-lists below.
     "fade_start": 1000.0,
     "currency": "EUR",
     "timezone": "Europe/London",
@@ -216,7 +216,7 @@ class Movement(BaseModel):
 class SettingsEntry(BaseModel):
     kind: Literal["settings"]
     timestamp: str
-    theme: Literal["dark","light","dracula","winclassic","system1"]
+    theme: Literal["dark","light","dracula","winclassic","system1","terminal","swiss","bauhaus"]
     fade_start: float
     currency: Optional[Literal["EUR","USD","GBP"]] = None
     timezone: Optional[str] = None
@@ -402,7 +402,7 @@ def get_settings() -> dict:
             data = json.load(f)
         for k, v in DEFAULT_SETTINGS.items():
             data.setdefault(k, v)
-        if data.get("theme") not in ("dark","light","dracula","winclassic","system1"):
+        if data.get("theme") not in ("dark","light","dracula","winclassic","system1","terminal","swiss","bauhaus"):
             data["theme"] = DEFAULT_SETTINGS["theme"]
         try:
             data["fade_start"] = float(data.get("fade_start", DEFAULT_SETTINGS["fade_start"]))
@@ -1114,7 +1114,7 @@ async def settings_get(request: Request):
 @app.post("/settings", response_class=HTMLResponse)
 async def settings_post(
     request: Request,
-    theme: Literal["dark","light","dracula","winclassic","system1"] = Form(...),
+    theme: Literal["dark","light","dracula","winclassic","system1","terminal","swiss","bauhaus"] = Form(...),
     fade_start: float = Form(...),
     currency: Literal["EUR","USD","GBP"] = Form(...),
     timezone: str = Form(...),

@@ -57,11 +57,16 @@ html, body {
   color: var(--text);
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
 }
+.app-shell { min-height: 100vh; display: flex; flex-direction: column; }
+.page-shell { width: 100%; flex: 1 0 auto; }
 .container { max-width: 960px; margin: 0 auto; padding: 16px; overflow-x: hidden; }
 
 /* Topbar */
 .topbar { background: var(--panel); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 50; }
 .topbar h1 { margin: 0; font-size: 18px; }
+.brand-lockup { display: inline-flex; align-items: center; gap: 10px; min-width: 0; }
+.brand-mark { display: none; align-items: center; gap: 4px; flex: 0 0 auto; }
+.brand-shape { display: block; width: 10px; height: 10px; }
 .rowflex { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .topbar .container { position: relative; } /* anchor for absolute mobile menu */
 
@@ -73,6 +78,9 @@ html, body {
 /* Mobile menu button (uses inline SVG in base.html) */
 .hamburger {
   display: none !important;
+  min-width: 44px;
+  flex: 0 0 44px;
+  margin-left: auto;
   background: transparent;
   border: 0;
   padding: 8px;
@@ -182,7 +190,7 @@ button.danger { background: var(--danger); }
 
 /* Movements table — single markup, responsive */
 .table { margin-top: 10px; width: 100%; }
-.row { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 3fr; gap: 12px; padding: 12px; border-bottom: 1px solid var(--border); align-items: center; }
+.row { display: grid; grid-template-columns: 1.6fr .8fr 1fr 1fr 2.2fr 1.2fr; gap: 12px; padding: 12px; border-bottom: 1px solid var(--border); align-items: center; }
 .row.header { font-weight: 700; color: var(--muted); background: var(--soft); border-top-left-radius: 8px; border-top-right-radius: 8px; }
 .cell { min-width: 0; overflow-wrap: anywhere; word-break: break-word; white-space: normal; }
 
@@ -197,6 +205,11 @@ button.danger { background: var(--danger); }
 a, button, input, select { touch-action: manipulation; }
 input, select { min-height: 44px; }
 .desktop-nav a { min-height: 40px; }
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+summary:focus-visible,
+a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 /* Vertical spacing between stacked cards on normal pages (Home/Settings) */
 main > .card + .card { margin-top: 16px; }
