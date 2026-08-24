@@ -25,6 +25,7 @@ jobs:
           filters: |
             build:
               - 'Dockerfile'
+              - 'requirements.txt'
               - 'docker/**'
               - 'app/**'
               - '!**/*.md'

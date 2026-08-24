@@ -708,28 +708,31 @@ async def index(request: Request):
             "tags_names": tags_names
         })
 
-    return templates.TemplateResponse("index.html", {
-        "request": request,
-        "balance_display": balance_display,
-        "balance_color": balance_color,
-        "show_balance": settings.get("show_balance", True),
-        "balance_obfuscated": balance_obfuscated,
-        "movements": movements,
-        "app_name": APP_NAME,
-        "theme": settings["theme"],
-        "t": t,
-        "lang": lang,
-        "q": q,
-        "action_filter": action_filter,
-        "start_str": start_str,
-        "end_str": end_str,
-        "min_str": min_str,
-        "max_str": max_str,
-        "filters_open": filters_open,
-    "tag_types": tag_types,
-        "selected_tags": selected_tags,
-        "limit_selected": ("all" if limit is None else str(limit)),
-    })
+    return templates.TemplateResponse(
+        request=request,
+        name="index.html",
+        context={
+            "balance_display": balance_display,
+            "balance_color": balance_color,
+            "show_balance": settings.get("show_balance", True),
+            "balance_obfuscated": balance_obfuscated,
+            "movements": movements,
+            "app_name": APP_NAME,
+            "theme": settings["theme"],
+            "t": t,
+            "lang": lang,
+            "q": q,
+            "action_filter": action_filter,
+            "start_str": start_str,
+            "end_str": end_str,
+            "min_str": min_str,
+            "max_str": max_str,
+            "filters_open": filters_open,
+            "tag_types": tag_types,
+            "selected_tags": selected_tags,
+            "limit_selected": ("all" if limit is None else str(limit)),
+        },
+    )
 
 @app.post("/toggle-balance")
 async def toggle_balance():
@@ -749,13 +752,16 @@ async def setup_get(request: Request):
     settings = get_settings()
     lang = settings["language"]
     t = t_for(lang)
-    return templates.TemplateResponse("setup.html", {
-        "request": request,
-        "app_name": APP_NAME,
-        "theme": settings["theme"],
-        "t": t,
-        "lang": lang
-    })
+    return templates.TemplateResponse(
+        request=request,
+        name="setup.html",
+        context={
+            "app_name": APP_NAME,
+            "theme": settings["theme"],
+            "t": t,
+            "lang": lang,
+        },
+    )
 
 @app.post("/setup", response_class=HTMLResponse)
 async def setup_post(
@@ -772,13 +778,18 @@ async def setup_post(
     t = t_for(lang)
 
     def render_error(msg: str, status_code: int = 400):
-        return templates.TemplateResponse("setup.html", {
-            "request": request,
-            "error": msg,
-            "app_name": APP_NAME,
-            "theme": settings["theme"],
-            "t": t, "lang": lang
-        }, status_code=status_code)
+        return templates.TemplateResponse(
+            request=request,
+            name="setup.html",
+            context={
+                "error": msg,
+                "app_name": APP_NAME,
+                "theme": settings["theme"],
+                "t": t,
+                "lang": lang,
+            },
+            status_code=status_code,
+        )
 
     if setup_mode == "import":
         if not ledger_file:
@@ -979,10 +990,19 @@ async def reset_get(request: Request):
     settings = get_settings()
     lang = settings["language"]
     t = t_for(lang)
-    return templates.TemplateResponse("reset.html", {
-        "request": request, "a": a, "b": b, "op": op,
-        "app_name": APP_NAME, "theme": settings["theme"], "t": t, "lang": lang
-    })
+    return templates.TemplateResponse(
+        request=request,
+        name="reset.html",
+        context={
+            "a": a,
+            "b": b,
+            "op": op,
+            "app_name": APP_NAME,
+            "theme": settings["theme"],
+            "t": t,
+            "lang": lang,
+        },
+    )
 
 @app.post("/reset", response_class=HTMLResponse)
 async def reset_post(
@@ -1031,9 +1051,9 @@ async def reset_post(
     if errors:
         # Re-render SAME challenge to allow user to fix inputs; keep their values
         return templates.TemplateResponse(
-            "reset.html",
-            {
-                "request": request,
+            request=request,
+            name="reset.html",
+            context={
                 "error": " ".join(errors),  # page-level alert via base.html
                 "a": a,
                 "b": b,
@@ -1078,15 +1098,18 @@ async def settings_get(request: Request):
     lang = s["language"]
     t = t_for(lang)
     tz_preview = format_now_preview(s["timezone"])
-    return templates.TemplateResponse("settings.html", {
-        "request": request,
-        "app_name": APP_NAME,
-        "theme": s["theme"],
-        "settings": s,
-        "tz_preview": tz_preview,
-        "t": t,
-        "lang": lang
-    })
+    return templates.TemplateResponse(
+        request=request,
+        name="settings.html",
+        context={
+            "app_name": APP_NAME,
+            "theme": s["theme"],
+            "settings": s,
+            "tz_preview": tz_preview,
+            "t": t,
+            "lang": lang,
+        },
+    )
 
 @app.post("/settings", response_class=HTMLResponse)
 async def settings_post(
@@ -1239,14 +1262,17 @@ async def summary_get(request: Request):
             "total_expenses_display": format_currency(total_expenses_val, currency),
         })
 
-    return templates.TemplateResponse("summary.html", {
-        "request": request,
-        "app_name": APP_NAME,
-        "theme": s["theme"],
-        "t": t,
-        "lang": lang,
-        "groups": display_groups,
-    })
+    return templates.TemplateResponse(
+        request=request,
+        name="summary.html",
+        context={
+            "app_name": APP_NAME,
+            "theme": s["theme"],
+            "t": t,
+            "lang": lang,
+            "groups": display_groups,
+        },
+    )
 
 @app.get("/healthz")
 async def health():
